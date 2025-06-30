@@ -36,7 +36,7 @@ function requireLogin(req, res, next) {
   }
 }
 
-const PORT = 3000;
+const PORT = 80;
 let sock;
 let qrBase64 = null;
 const logFile = path.join(__dirname, 'gateway.log');
@@ -239,6 +239,10 @@ function getLocalIp() {
   }
   return 'localhost';
 }
+
+app.get('/', (req, res) => {
+  res.send('Halo dari Node.js!');
+});
 
 const host = getLocalIp();
 
