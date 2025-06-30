@@ -14,6 +14,7 @@ const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 const session = require('express-session');
+const os = require('os');
 
 const app = express();
 app.use(cors());
@@ -226,8 +227,22 @@ app.post('/logout', (req, res) => {
   });
 });
 
-// Start server
+
+function getLocalIp() {
+  const interfaces = os.networkInterfaces();
+  for (const iface of Object.values(interfaces)) {
+    for (const config of iface) {
+      if (config.family === 'IPv4' && !config.internal) {
+        return config.address;
+      }
+    }
+  }
+  return 'localhost';
+}
+
+const host = getLocalIp();
+
 app.listen(PORT, () => {
-  console.log(`🚀 Gateway aktif di http://localhost:${PORT}`);
-  writeLog(`🚀 Server aktif di port ${PORT}`);
+  console.log(`🚀 Gateway aktif di http://${host}:${PORT}`);
+  writeLog(`🚀 Server aktif di http://${host}:${PORT}`);
 });
