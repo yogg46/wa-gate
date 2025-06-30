@@ -1,0 +1,13 @@
+<img id="qr-img" src="" alt="QR akan muncul di sini">
+<script>
+  async function fetchQR() {
+    const res = await fetch('http://localhost:3000/qr');
+    const data = await res.json();
+    if (data.status) {
+      document.getElementById('qr-img').src = data.qr;
+    }
+  }
+
+  fetchQR();
+  setInterval(fetchQR, 10000);
+</script>

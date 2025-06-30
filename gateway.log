@@ -1,0 +1,23 @@
+[2025-06-30T06:59:05.421Z] ✅ WhatsApp berhasil terhubung.
+[2025-06-30T06:59:41.679Z] 📩 Pesan dengan kata kunci "lihat ruang" dari 6285607612754@s.whatsapp.net: lihat ruang
+[2025-06-30T06:59:44.233Z] 📤 Webhook berhasil dikirim ke Laravel. Respon: 200
+[2025-06-30T06:59:54.325Z] 📩 Pesan dengan kata kunci "lihat ruang" dari 6285607612754@s.whatsapp.net: lihat ruang
+[2025-06-30T06:59:56.389Z] 📤 Webhook berhasil dikirim ke Laravel. Respon: 200
+[2025-06-30T07:04:42.775Z] 🚀 Gateway mulai di port 3000
+[2025-06-30T07:04:45.030Z] ✅ WhatsApp berhasil terhubung.
+[2025-06-30T07:05:12.657Z] 📩 Pesan keyword "lihat ruang" dari 6285607612754@s.whatsapp.net: lihat ruang
+[2025-06-30T07:05:14.241Z] 📤 Webhook sukses kirim ke Laravel: 200
+[2025-06-30T07:08:18.329Z] 📩 Pesan keyword "lihat ruang" dari 6289636157378@s.whatsapp.net: Lihat ruang
+[2025-06-30T07:08:20.655Z] 📤 Webhook sukses kirim ke Laravel: 200
+[2025-06-30T07:08:37.520Z] 📩 Pesan keyword "pinjam ruang" dari 6289636157378@s.whatsapp.net: Pinjam ruang 1
+[2025-06-30T07:08:38.669Z] 📤 Webhook sukses kirim ke Laravel: 200
+[2025-06-30T07:08:47.293Z] 📩 Pesan keyword "pinjam ruang" dari 6289636157378@s.whatsapp.net: pinjam ruang 4
+[2025-06-30T07:08:47.936Z] 📤 Webhook sukses kirim ke Laravel: 200
+[2025-06-30T07:09:21.590Z] 📩 Pesan keyword "lihat ruang" dari 6289636157378@s.whatsapp.net: lihat ruang
+[2025-06-30T07:09:22.337Z] 📤 Webhook sukses kirim ke Laravel: 200
+[2025-06-30T07:19:21.820Z] 🚀 Server aktif di port 3000
+[2025-06-30T07:19:23.929Z] ✅ WhatsApp berhasil terhubung.
+[2025-06-30T07:33:02.884Z] 📩 Keyword "pinjam ruang" dari 6285607612754@s.whatsapp.net: pinjam ruang
+[2025-06-30T07:33:04.256Z] 📤 Webhook ke Laravel OK: 200
+[2025-06-30T07:33:16.822Z] 📩 Keyword "lihat ruang" dari 6285607612754@s.whatsapp.net: lihat ruang
+[2025-06-30T07:33:17.586Z] 📤 Webhook ke Laravel OK: 200
