@@ -1,13 +1,64 @@
-<img id="qr-img" src="" alt="QR akan muncul di sini">
-<script>
-  async function fetchQR() {
-    const res = await fetch('http://localhost:3000/qr');
-    const data = await res.json();
-    if (data.status) {
-      document.getElementById('qr-img').src = data.qr;
-    }
-  }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monitoring WA Gateway</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    #qr-img { border: 1px solid #ccc; padding: 10px; width: 200px; }
+    #status { margin-top: 10px; font-weight: bold; }
+    #log { margin-top: 20px; white-space: pre-wrap; background: #f9f9f9; padding: 10px; border: 1px solid #ddd; height: 300px; overflow-y: scroll; }
+  </style>
+</head>
+<body>
 
-  fetchQR();
-  setInterval(fetchQR, 10000);
-</script>
+  <h2>WhatsApp Gateway Status</h2>
+  <img id="qr-img" src="" alt="QR akan muncul di sini">
+  <div id="status">🔄 Menunggu QR...</div>
+
+  <h3>📋 Log Aktivitas</h3>
+  <div id="log">Memuat log...</div>
+
+  <script>
+    async function fetchQR() {
+      try {
+        const res = await fetch('http://localhost:3000/qr');
+        const data = await res.json();
+        const statusEl = document.getElementById('status');
+        const imgEl = document.getElementById('qr-img');
+
+        if (data.status) {
+          imgEl.src = data.qr;
+          statusEl.textContent = '📸 QR tersedia, silakan scan di WhatsApp';
+        } else {
+          statusEl.textContent = '✅ WhatsApp sudah terhubung';
+          imgEl.src = '';
+        }
+      } catch (err) {
+        document.getElementById('status').textContent = '❌ Gagal mengambil QR: ' + err.message;
+      }
+    }
+
+    async function fetchLog() {
+  try {
+    const res = await fetch('http://localhost:3000/logs'); // ← dari Node.js
+    const data = await res.json();
+    document.getElementById('log').textContent = data.log || 'Log kosong';
+  } catch (err) {
+    document.getElementById('log').textContent = '❌ Gagal memuat log: ' + err.message;
+  }
+}
+
+
+    // Panggil saat awal
+    fetchQR();
+    fetchLog();
+
+    // Refresh tiap 10 detik
+    setInterval(fetchQR, 10000);
+    setInterval(fetchLog, 10000);
+  </script>
+
+</body>
+</html>

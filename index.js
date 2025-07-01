@@ -36,7 +36,7 @@ function requireLogin(req, res, next) {
   }
 }
 
-const PORT = 80;
+const PORT = 3000;
 let sock;
 let qrBase64 = null;
 const logFile = path.join(__dirname, 'gateway.log');
@@ -204,10 +204,15 @@ app.post('/login', (req, res) => {
   }
 });
 
+app.get('/qrcode', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+
 app.get('/dashboard', requireLogin, (req, res) => {
   res.send(`
     <h2>📋 Dashboard WA Gateway</h2>
-    <p><a href="/qr">Lihat QR</a></p>
+    <p><a href="/qrcode">Lihat QR</a></p>
     <p><a href="/view-log">Lihat Log</a></p>
     <form method="POST" action="/logout"><button>Logout</button></form>
   `);
