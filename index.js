@@ -36,7 +36,7 @@ function requireLogin(req, res, next) {
   }
 }
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 let sock;
 let qrBase64 = null;
 const logFile = path.join(__dirname, 'gateway.log');
