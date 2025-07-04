@@ -40,7 +40,7 @@
     <script>
       async function fetchQR() {
         try {
-          const res = await fetch('http://gateway.cetho.site/qr');
+          const res = await fetch('/qr');
           const data = await res.json();
           const statusEl = document.getElementById('status');
           const imgEl = document.getElementById('qr-img');
@@ -60,7 +60,7 @@
 
       async function fetchLog() {
         try {
-          const res = await fetch('hhttp://gateway.cetho.site/logs'); // ← dari Node.js
+          const res = await fetch('/logs'); // ← dari Node.js
           const data = await res.json();
           document.getElementById('log').textContent = data.log || 'Log kosong';
         } catch (err) {

@@ -21,7 +21,6 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Session untuk login sederhana
 app.use(session({
   secret: 'secret-wa-gateway',
   resave: false,
@@ -40,6 +39,7 @@ const PORT = process.env.PORT || 3000;
 let sock;
 let qrBase64 = null;
 const logFile = path.join(__dirname, 'gateway.log');
+const qrFile = path.join(__dirname, 'qr.tmp');
 
 // Logging
 function writeLog(text) {
@@ -47,37 +47,23 @@ function writeLog(text) {
   fs.appendFileSync(logFile, `[${timestamp}] ${text}\n`);
 }
 
-
 function clearAuthFolder() {
   const folder = path.join(__dirname, 'auth');
   fs.readdir(folder, (err, files) => {
-    if (err) {
-      console.error('Gagal membaca folder auth:', err);
-      return;
-    }
-
+    if (err) return;
     files.forEach((file) => {
       const filePath = path.join(folder, file);
       fs.stat(filePath, (err, stats) => {
-        if (err) {
-          console.error('Gagal membaca file:', err);
-          return;
-        }
-
+        if (err) return;
         if (stats.isDirectory()) {
-          fs.rmdir(filePath, { recursive: true }, (err) => {
-            if (err) console.error('Gagal hapus folder:', filePath, err);
-          });
+          fs.rmdir(filePath, { recursive: true }, () => {});
         } else {
-          fs.unlink(filePath, (err) => {
-            if (err) console.error('Gagal hapus file:', filePath, err);
-          });
+          fs.unlink(filePath, () => {});
         }
       });
     });
   });
 }
-
 
 function rotateLogIfNeeded() {
   try {
@@ -111,14 +97,17 @@ async function startSock() {
   sock.ev.on('connection.update', async (update) => {
     const { connection, qr, lastDisconnect } = update;
 
-    if (qr) {
-      qrBase64 = await qrcode.toDataURL(qr);
+    if (qr && !qrBase64) {
+      const base64QR = await qrcode.toDataURL(qr);
+      qrBase64 = base64QR;
+      fs.writeFileSync(qrFile, base64QR);
       writeLog('📸 QR diterima, menunggu scan...');
     }
 
     if (connection === 'open') {
       writeLog('✅ WhatsApp berhasil terhubung.');
       qrBase64 = null;
+      if (fs.existsSync(qrFile)) fs.unlinkSync(qrFile);
     }
 
     if (connection === 'close') {
@@ -177,9 +166,19 @@ startSock();
 app.get('/qr', (req, res) => {
   if (qrBase64) {
     return res.send({ status: true, qr: qrBase64 });
-  } else {
-    return res.status(404).send({ status: false, message: 'QR tidak tersedia' });
   }
+
+  // fallback ke file
+  try {
+    if (fs.existsSync(qrFile)) {
+      const data = fs.readFileSync(qrFile, 'utf8');
+      return res.send({ status: true, qr: data });
+    }
+  } catch (err) {
+    writeLog('❌ Gagal baca QR dari file: ' + err.message);
+  }
+
+  return res.status(404).send({ status: false, message: 'QR tidak tersedia' });
 });
 
 app.post('/send-message', async (req, res) => {
@@ -213,7 +212,6 @@ app.get('/logs', (req, res) => {
   });
 });
 
-// Login UI
 app.get('/login', (req, res) => {
   res.send(`
     <h2>🔐 Login WA Gateway</h2>
@@ -242,7 +240,6 @@ app.get('/qrcode', requireLogin, (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-
 app.get('/dashboard', requireLogin, (req, res) => {
   res.send(`
     <h2>📋 Dashboard WA Gateway</h2>
@@ -265,7 +262,6 @@ app.post('/logout', (req, res) => {
     res.redirect('/login');
   });
 });
-
 
 function getLocalIp() {
   const interfaces = os.networkInterfaces();
