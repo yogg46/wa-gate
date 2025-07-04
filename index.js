@@ -17,10 +17,17 @@ const session = require('express-session');
 const os = require('os');
 
 const app = express();
+const PORT = process.env.PORT || 3000;
+const logFile = path.join(__dirname, 'gateway.log');
+const qrFile = path.join(__dirname, 'qr.tmp');
+
+let sock;
+let qrBase64 = null;
+
+// Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
 app.use(session({
   secret: 'secret-wa-gateway',
   resave: false,
@@ -28,45 +35,23 @@ app.use(session({
 }));
 
 function requireLogin(req, res, next) {
-  if (req.session && req.session.loggedIn) {
-    next();
-  } else {
-    res.redirect('/login');
-  }
+  if (req.session?.loggedIn) return next();
+  res.redirect('/login');
 }
 
-const PORT = process.env.PORT || 3000;
-let sock;
-let qrBase64 = null;
-let qrTimeout = null;
-const logFile = path.join(__dirname, 'gateway.log');
-
-// ========== Logging ==========
-function writeLog(text) {
+// Utility: Logging
+function writeLog(msg) {
   const timestamp = new Date().toISOString();
-  fs.appendFileSync(logFile, `[${timestamp}] ${text}\n`);
+  fs.appendFileSync(logFile, `[${timestamp}] ${msg}\n`);
 }
 
-// ========== Clear auth ==========
+// Utility: Clear Auth
 function clearAuthFolder() {
   const folder = path.join(__dirname, 'auth');
-  fs.readdir(folder, (err, files) => {
-    if (err) return;
-    files.forEach((file) => {
-      const filePath = path.join(folder, file);
-      fs.stat(filePath, (err, stats) => {
-        if (err) return;
-        if (stats.isDirectory()) {
-          fs.rmdir(filePath, { recursive: true }, () => {});
-        } else {
-          fs.unlink(filePath, () => {});
-        }
-      });
-    });
-  });
+  fs.rm(folder, { recursive: true, force: true }, () => {});
 }
 
-// ========== Log Rotate ==========
+// Utility: Rotate log jika terlalu besar (>1MB)
 function rotateLogIfNeeded() {
   try {
     if (fs.existsSync(logFile)) {
@@ -83,7 +68,7 @@ function rotateLogIfNeeded() {
   }
 }
 
-// ========== Start WA Socket ==========
+// Start WA Socket
 async function startSock() {
   rotateLogIfNeeded();
 
@@ -93,30 +78,29 @@ async function startSock() {
   sock = makeWASocket({
     version,
     auth: state,
-    printQRInTerminal: true,
+    printQRInTerminal: true
   });
 
   sock.ev.on('connection.update', async (update) => {
     const { connection, qr, lastDisconnect } = update;
 
     if (qr) {
-      const base64QR = await qrcode.toDataURL(qr);
-      qrBase64 = base64QR;
-      writeLog('📸 QR diterima dan disimpan di memori');
-
-      // Atur timeout untuk hapus QR setelah 60 detik
-      if (qrTimeout) clearTimeout(qrTimeout);
-      qrTimeout = setTimeout(() => {
-        qrBase64 = null;
-        writeLog('⏲️ QR otomatis dihapus setelah 60 detik');
-      }, 60000); // 60 detik
+      try {
+        qrBase64 = await qrcode.toDataURL(qr);
+        fs.writeFileSync(qrFile, qrBase64);
+        writeLog(`📸 QR diterima dan disimpan ke ${qrFile}`);
+      } catch (err) {
+        writeLog(`❌ Gagal simpan QR: ${err.message}`);
+      }
     }
 
     if (connection === 'open') {
       writeLog('✅ WhatsApp berhasil terhubung.');
-      if (qrTimeout) clearTimeout(qrTimeout);
-      qrBase64 = null;
-      writeLog('🧹 QR dihapus karena koneksi sukses');
+      setTimeout(() => {
+        qrBase64 = null;
+        if (fs.existsSync(qrFile)) fs.unlinkSync(qrFile);
+        writeLog('🧹 QR dihapus karena koneksi sukses');
+      }, 5000);
     }
 
     if (connection === 'close') {
@@ -141,26 +125,21 @@ async function startSock() {
 
     const from = msg.key.remoteJid;
     const body = msg.message?.conversation || msg.message?.extendedTextMessage?.text || '';
-    const lowerBody = body.toLowerCase();
-    const keywords = ['pinjam ruang', 'lihat ruang'];
-    const matched = keywords.find(k => lowerBody.includes(k));
+    const lower = body.toLowerCase();
 
+    const matched = ['pinjam ruang', 'lihat ruang'].find(k => lower.includes(k));
     if (matched) {
       writeLog(`📩 Keyword "${matched}" dari ${from}: ${body}`);
-
       try {
-        const res = await axios.post(process.env.LARAVEL_WEBHOOK_URL, {
-          from,
-          body,
-          timestamp: msg.messageTimestamp
+        const response = await axios.post(process.env.LARAVEL_WEBHOOK_URL, {
+          from, body, timestamp: msg.messageTimestamp
         }, {
           headers: {
-            'Authorization': `Bearer ${process.env.LARAVEL_API_KEY}`,
+            Authorization: `Bearer ${process.env.LARAVEL_API_KEY}`,
             'Content-Type': 'application/json'
           }
         });
-
-        writeLog(`📤 Webhook ke Laravel OK: ${res.status}`);
+        writeLog(`📤 Webhook ke Laravel OK: ${response.status}`);
       } catch (err) {
         writeLog(`❌ Gagal webhook: ${err.message}`);
       }
@@ -170,45 +149,53 @@ async function startSock() {
 
 startSock();
 
-// ========== ROUTES ==========
-
+// Routes
 app.get('/qr', (req, res) => {
   if (qrBase64) {
     writeLog('✅ Mengirim QR dari memori');
     return res.send({ status: true, qr: qrBase64 });
   }
 
-  writeLog(`⚠️ QR belum tersedia di memori`);
-  return res.send({ status: false, qr: null, message: 'QR tidak tersedia' });
+  try {
+    if (fs.existsSync(qrFile)) {
+      const qr = fs.readFileSync(qrFile, 'utf8');
+      writeLog('✅ Mengirim QR dari file cadangan');
+      return res.send({ status: true, qr });
+    }
+  } catch (err) {
+    writeLog(`❌ Gagal baca file QR: ${err.message}`);
+  }
+
+  return res.send({ status: false, qr: qrBase64 || null, message: 'QR tidak tersedia' });
 });
 
 app.post('/send-message', async (req, res) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || authHeader !== `Bearer ${process.env.LARAVEL_API_KEY}`) {
-    return res.status(401).send({ status: false, message: 'Unauthorized' });
+  const token = req.headers.authorization;
+  if (!token || token !== `Bearer ${process.env.LARAVEL_API_KEY}`) {
+    return res.status(401).json({ status: false, message: 'Unauthorized' });
   }
 
   const { to, message } = req.body;
   if (!to || !message) {
-    return res.status(400).send({ status: false, message: 'to dan message wajib diisi' });
+    return res.status(400).json({ status: false, message: 'to dan message wajib diisi' });
   }
 
   try {
     const jid = to.includes('@s.whatsapp.net') ? to : `${to}@s.whatsapp.net`;
     await sock.sendMessage(jid, { text: message });
-    res.send({ status: true, message: 'Pesan berhasil dikirim' });
+    writeLog(`📨 Pesan terkirim ke ${to}`);
+    res.json({ status: true, message: 'Pesan berhasil dikirim' });
   } catch (err) {
     writeLog(`❌ Gagal kirim pesan ke ${to}: ${err.message}`);
-    res.status(500).send({ status: false, message: 'Gagal kirim pesan', error: err.message });
+    res.status(500).json({ status: false, message: 'Gagal kirim pesan', error: err.message });
   }
 });
 
 app.get('/logs', (req, res) => {
   fs.readFile(logFile, 'utf8', (err, data) => {
-    if (err) return res.status(500).json({ log: 'Gagal membaca log: ' + err.message });
-    const lines = data.trim().split('\n');
-    const lastLines = lines.slice(-100).join('\n');
-    res.json({ log: lastLines });
+    if (err) return res.status(500).json({ log: `Gagal membaca log: ${err.message}` });
+    const lines = data.trim().split('\n').slice(-100).join('\n');
+    res.json({ log: lines });
   });
 });
 
@@ -225,10 +212,7 @@ app.get('/login', (req, res) => {
 
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
-  if (
-    username === process.env.LOGIN_USERNAME &&
-    password === process.env.LOGIN_PASSWORD
-  ) {
+  if (username === process.env.LOGIN_USERNAME && password === process.env.LOGIN_PASSWORD) {
     req.session.loggedIn = true;
     res.redirect('/dashboard');
   } else {
@@ -236,8 +220,8 @@ app.post('/login', (req, res) => {
   }
 });
 
-app.get('/qrcode', requireLogin, (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+app.post('/logout', (req, res) => {
+  req.session.destroy(() => res.redirect('/login'));
 });
 
 app.get('/dashboard', requireLogin, (req, res) => {
@@ -257,27 +241,23 @@ app.get('/view-log', requireLogin, (req, res) => {
   });
 });
 
-app.post('/logout', (req, res) => {
-  req.session.destroy(() => {
-    res.redirect('/login');
-  });
+app.get('/qrcode', requireLogin, (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.get('/', (req, res) => {
+  res.send('Halo dari Node.js!');
 });
 
 function getLocalIp() {
   const interfaces = os.networkInterfaces();
   for (const iface of Object.values(interfaces)) {
     for (const config of iface) {
-      if (config.family === 'IPv4' && !config.internal) {
-        return config.address;
-      }
+      if (config.family === 'IPv4' && !config.internal) return config.address;
     }
   }
   return 'localhost';
 }
-
-app.get('/', (req, res) => {
-  res.send('Halo dari Node.js!');
-});
 
 const host = getLocalIp();
 app.listen(PORT, () => {
