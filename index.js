@@ -47,6 +47,38 @@ function writeLog(text) {
   fs.appendFileSync(logFile, `[${timestamp}] ${text}\n`);
 }
 
+
+function clearAuthFolder() {
+  const folder = path.join(__dirname, 'auth');
+  fs.readdir(folder, (err, files) => {
+    if (err) {
+      console.error('Gagal membaca folder auth:', err);
+      return;
+    }
+
+    files.forEach((file) => {
+      const filePath = path.join(folder, file);
+      fs.stat(filePath, (err, stats) => {
+        if (err) {
+          console.error('Gagal membaca file:', err);
+          return;
+        }
+
+        if (stats.isDirectory()) {
+          fs.rmdir(filePath, { recursive: true }, (err) => {
+            if (err) console.error('Gagal hapus folder:', filePath, err);
+          });
+        } else {
+          fs.unlink(filePath, (err) => {
+            if (err) console.error('Gagal hapus file:', filePath, err);
+          });
+        }
+      });
+    });
+  });
+}
+
+
 function rotateLogIfNeeded() {
   try {
     if (fs.existsSync(logFile)) {
@@ -92,12 +124,14 @@ async function startSock() {
     if (connection === 'close') {
       const code = lastDisconnect?.error?.output?.statusCode;
       writeLog(`❌ Koneksi terputus: ${code}`);
+      clearAuthFolder();
       if (code !== DisconnectReason.loggedOut) {
         setTimeout(() => {
           writeLog('🔄 Mencoba koneksi ulang...');
           startSock();
         }, 3000);
       }
+      process.exit(1);
     }
   });
 
@@ -204,7 +238,7 @@ app.post('/login', (req, res) => {
   }
 });
 
-app.get('/qrcode', (req, res) => {
+app.get('/qrcode', requireLogin, (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
