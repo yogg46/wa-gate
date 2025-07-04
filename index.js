@@ -38,8 +38,8 @@ function requireLogin(req, res, next) {
 const PORT = process.env.PORT || 3000;
 let sock;
 let qrBase64 = null;
-const logFile = path.join(__dirname, 'gateway.log');
-const qrFile = path.join(__dirname, 'qr.tmp');
+const logFile = path.resolve('./gateway.log');
+const qrFile = path.resolve('./qr.tmp');
 
 // Logging
 function writeLog(text) {
@@ -49,7 +49,7 @@ function writeLog(text) {
 
 // Clear auth folder
 function clearAuthFolder() {
-  const folder = path.join(__dirname, 'auth');
+  const folder = path.resolve('./auth');
   fs.readdir(folder, (err, files) => {
     if (err) return;
     files.forEach((file) => {
@@ -74,7 +74,7 @@ function rotateLogIfNeeded() {
       const maxSize = 1 * 1024 * 1024;
       if (stats.size >= maxSize) {
         const backup = `gateway-${Date.now()}.log`;
-        fs.renameSync(logFile, path.join(__dirname, backup));
+        fs.renameSync(logFile, path.resolve(`./${backup}`));
         writeLog('📁 Log diputar karena ukuran > 1MB');
       }
     }
@@ -104,7 +104,7 @@ async function startSock() {
       qrBase64 = base64QR;
       try {
         fs.writeFileSync(qrFile, base64QR);
-        writeLog('📸 QR diterima dan disimpan ke qr.tmp');
+        writeLog(`📸 QR diterima dan disimpan ke ${qrFile}`);
       } catch (err) {
         writeLog('❌ Gagal simpan QR ke file: ' + err.message);
       }
@@ -186,7 +186,7 @@ app.get('/qr', (req, res) => {
       writeLog('✅ Mengirim QR dari file cadangan');
       return res.send({ status: true, qr: data });
     } else {
-      writeLog('⚠️ File qr.tmp tidak ditemukan');
+      writeLog(`⚠️ File QR tidak ditemukan di ${qrFile}`);
     }
   } catch (err) {
     writeLog('❌ Gagal baca file qr.tmp: ' + err.message);
@@ -251,7 +251,7 @@ app.post('/login', (req, res) => {
 });
 
 app.get('/qrcode', requireLogin, (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+  res.sendFile(path.resolve('./index.html'));
 });
 
 app.get('/dashboard', requireLogin, (req, res) => {
