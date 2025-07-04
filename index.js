@@ -168,7 +168,7 @@ startSock();
 
 // ========== ROUTES ==========
 
-app.get('/qr', (req, res) => {
+app.get('/qr1', (req, res) => {
   writeLog('🔍 Endpoint /qr diakses');
 
   if (qrBase64) {
