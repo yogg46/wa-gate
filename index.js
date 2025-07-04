@@ -39,7 +39,8 @@ const PORT = process.env.PORT || 3000;
 let sock;
 let qrBase64 = null;
 const logFile = path.resolve('./gateway.log');
-const qrFile = path.resolve('./qr.tmp');
+const qrFile = path.join(__dirname, 'qr.tmp');
+
 
 // Logging
 function writeLog(text) {
