@@ -38,19 +38,18 @@ function requireLogin(req, res, next) {
 const PORT = process.env.PORT || 3000;
 let sock;
 let qrBase64 = null;
-const logFile = path.resolve('./gateway.log');
+const logFile = path.join(__dirname, 'gateway.log');
 const qrFile = path.join(__dirname, 'qr.tmp');
 
-
-// Logging
+// ========== Logging ==========
 function writeLog(text) {
   const timestamp = new Date().toISOString();
   fs.appendFileSync(logFile, `[${timestamp}] ${text}\n`);
 }
 
-// Clear auth folder
+// ========== Clear auth ==========
 function clearAuthFolder() {
-  const folder = path.resolve('./auth');
+  const folder = path.join(__dirname, 'auth');
   fs.readdir(folder, (err, files) => {
     if (err) return;
     files.forEach((file) => {
@@ -67,7 +66,7 @@ function clearAuthFolder() {
   });
 }
 
-// Rotate log jika > 1MB
+// ========== Log Rotate ==========
 function rotateLogIfNeeded() {
   try {
     if (fs.existsSync(logFile)) {
@@ -75,7 +74,7 @@ function rotateLogIfNeeded() {
       const maxSize = 1 * 1024 * 1024;
       if (stats.size >= maxSize) {
         const backup = `gateway-${Date.now()}.log`;
-        fs.renameSync(logFile, path.resolve(`./${backup}`));
+        fs.renameSync(logFile, path.join(__dirname, backup));
         writeLog('📁 Log diputar karena ukuran > 1MB');
       }
     }
@@ -84,7 +83,7 @@ function rotateLogIfNeeded() {
   }
 }
 
-// WA Socket
+// ========== Start WA Socket ==========
 async function startSock() {
   rotateLogIfNeeded();
 
@@ -113,11 +112,7 @@ async function startSock() {
 
     if (connection === 'open') {
       writeLog('✅ WhatsApp berhasil terhubung.');
-      setTimeout(() => {
-        qrBase64 = null;
-        if (fs.existsSync(qrFile)) fs.unlinkSync(qrFile);
-        writeLog('🧹 QR dihapus karena koneksi sukses');
-      }, 5000);
+      qrBase64 = null; // Hapus dari memori, tapi file dibiarkan
     }
 
     if (connection === 'close') {
@@ -171,7 +166,7 @@ async function startSock() {
 
 startSock();
 
-// ==== ROUTES ====
+// ========== ROUTES ==========
 
 app.get('/qr', (req, res) => {
   writeLog('🔍 Endpoint /qr diakses');
@@ -226,7 +221,6 @@ app.get('/logs', (req, res) => {
   });
 });
 
-// Login system
 app.get('/login', (req, res) => {
   res.send(`
     <h2>🔐 Login WA Gateway</h2>
@@ -252,7 +246,7 @@ app.post('/login', (req, res) => {
 });
 
 app.get('/qrcode', requireLogin, (req, res) => {
-  res.sendFile(path.resolve('./index.html'));
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 app.get('/dashboard', requireLogin, (req, res) => {
@@ -295,7 +289,6 @@ app.get('/', (req, res) => {
 });
 
 const host = getLocalIp();
-
 app.listen(PORT, () => {
   console.log(`🚀 Gateway aktif di http://${host}:${PORT}`);
   writeLog(`🚀 Server aktif di http://${host}:${PORT}`);
