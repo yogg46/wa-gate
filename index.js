@@ -186,7 +186,6 @@ app.get('/qr', (req, res) => {
     }
   } catch (err) {
     writeLog('❌ Gagal baca file qr.tmp: ' + err.message);
-    // return res.status(404).send({ status: false, message: 'QR tidak tersedia' });
   }
 
 });
