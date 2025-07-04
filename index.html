@@ -46,7 +46,7 @@
         const statusEl = document.getElementById('status');
 
         try {
-          const res = await fetch('/qr1');
+          const res = await fetch('/qr');
           const data = await res.json();
 
           if (data.status && data.qr) {

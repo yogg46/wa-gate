@@ -112,7 +112,11 @@ async function startSock() {
 
     if (connection === 'open') {
       writeLog('✅ WhatsApp berhasil terhubung.');
-      // qrBase64 = null; // Hapus dari memori, tapi file dibiarkan
+       setTimeout(() => {
+        qrBase64 = null;
+        if (fs.existsSync(qrFile)) fs.unlinkSync(qrFile);
+        writeLog('🧹 QR dihapus karena koneksi sukses');
+      }, 5000);
     }
 
     if (connection === 'close') {
@@ -168,7 +172,7 @@ startSock();
 
 // ========== ROUTES ==========
 
-app.get('/qr1', (req, res) => {
+app.get('/qr', (req, res) => {
   writeLog('🔍 Endpoint /qr diakses');
 
   if (qrBase64) {
