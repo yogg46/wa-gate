@@ -23,6 +23,7 @@ const qrFile = path.join(__dirname, 'qr.tmp');
 
 let sock;
 let qrBase64 = null;
+let qrLocked = false; // Lock QR saat sedang proses scan
 
 // Middleware
 app.use(cors());
@@ -39,19 +40,19 @@ function requireLogin(req, res, next) {
   res.redirect('/login');
 }
 
-// Utility: Logging
+// Logging
 function writeLog(msg) {
   const timestamp = new Date().toISOString();
   fs.appendFileSync(logFile, `[${timestamp}] ${msg}\n`);
 }
 
-// Utility: Clear Auth
+// Hapus folder auth
 function clearAuthFolder() {
   const folder = path.join(__dirname, 'auth');
   fs.rm(folder, { recursive: true, force: true }, () => {});
 }
 
-// Utility: Rotate log jika terlalu besar (>1MB)
+// Log rotate
 function rotateLogIfNeeded() {
   try {
     if (fs.existsSync(logFile)) {
@@ -84,11 +85,21 @@ async function startSock() {
   sock.ev.on('connection.update', async (update) => {
     const { connection, qr, lastDisconnect } = update;
 
-    if (qr) {
+    if (qr && !qrLocked) {
       try {
+        qrLocked = true;
         qrBase64 = await qrcode.toDataURL(qr);
         fs.writeFileSync(qrFile, qrBase64);
         writeLog(`📸 QR diterima dan disimpan ke ${qrFile}`);
+
+        // Auto unlock QR setelah 30 detik jika tidak berhasil koneksi
+        setTimeout(() => {
+          if (qrLocked) {
+            qrLocked = false;
+            writeLog('⏳ QR dibuka kembali karena timeout (tidak discan)');
+          }
+        }, 30000);
+
       } catch (err) {
         writeLog(`❌ Gagal simpan QR: ${err.message}`);
       }
@@ -98,6 +109,7 @@ async function startSock() {
       writeLog('✅ WhatsApp berhasil terhubung.');
       setTimeout(() => {
         qrBase64 = null;
+        qrLocked = false;
         if (fs.existsSync(qrFile)) fs.unlinkSync(qrFile);
         writeLog('🧹 QR dihapus karena koneksi sukses');
       }, 5000);
@@ -113,7 +125,7 @@ async function startSock() {
           startSock();
         }, 3000);
       }
-     
+      process.exit(1);
     }
   });
 
@@ -166,7 +178,7 @@ app.get('/qr', (req, res) => {
     writeLog(`❌ Gagal baca file QR: ${err.message}`);
   }
 
-  return res.send({ status: false, qr: qrBase64 || null, message: 'QR tidak tersedia' });
+  return res.send({ status: false, qr: null, message: 'QR tidak tersedia' });
 });
 
 app.post('/send-message', async (req, res) => {
