@@ -38,6 +38,7 @@ function requireLogin(req, res, next) {
 const PORT = process.env.PORT || 3000;
 let sock;
 let qrBase64 = null;
+let qrTimeout = null;
 const logFile = path.join(__dirname, 'gateway.log');
 
 // ========== Logging ==========
@@ -102,11 +103,19 @@ async function startSock() {
       const base64QR = await qrcode.toDataURL(qr);
       qrBase64 = base64QR;
       writeLog('📸 QR diterima dan disimpan di memori');
+
+      // Atur timeout untuk hapus QR setelah 60 detik
+      if (qrTimeout) clearTimeout(qrTimeout);
+      qrTimeout = setTimeout(() => {
+        qrBase64 = null;
+        writeLog('⏲️ QR otomatis dihapus setelah 60 detik');
+      }, 60000); // 60 detik
     }
 
     if (connection === 'open') {
       writeLog('✅ WhatsApp berhasil terhubung.');
-      qrBase64 = null; // Hapus QR segera
+      if (qrTimeout) clearTimeout(qrTimeout);
+      qrBase64 = null;
       writeLog('🧹 QR dihapus karena koneksi sukses');
     }
 
@@ -120,7 +129,7 @@ async function startSock() {
           startSock();
         }, 3000);
       }
-      // process.exit(1);
+      process.exit(1);
     }
   });
 
