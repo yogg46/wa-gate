@@ -1,25 +1,28 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Monitoring WA Gateway</title>
+    <title>WhatsApp Gateway Monitor</title>
     <style>
       body {
         font-family: sans-serif;
         padding: 20px;
+        max-width: 700px;
+        margin: auto;
       }
       #qr-img {
         border: 1px solid #ccc;
         padding: 10px;
-        width: 200px;
+        width: 250px;
+        display: block;
+        margin-bottom: 10px;
       }
       #status {
-        margin-top: 10px;
+        margin: 10px 0;
         font-weight: bold;
       }
       #log {
-        margin-top: 20px;
         white-space: pre-wrap;
         background: #f9f9f9;
         padding: 10px;
@@ -30,50 +33,52 @@
     </style>
   </head>
   <body>
-    <h2>WhatsApp Gateway Status</h2>
+    <h2>📡 WhatsApp Gateway Status</h2>
     <img id="qr-img" src="" alt="QR akan muncul di sini" />
-    <div id="status">🔄 Menunggu QR...</div>
+    <div id="status">🔄 Mengambil status koneksi...</div>
 
     <h3>📋 Log Aktivitas</h3>
     <div id="log">Memuat log...</div>
 
     <script>
       async function fetchQR() {
+        const imgEl = document.getElementById('qr-img');
+        const statusEl = document.getElementById('status');
+
         try {
           const res = await fetch('/qr');
           const data = await res.json();
-          const statusEl = document.getElementById('status');
-          const imgEl = document.getElementById('qr-img');
 
-          if (data.status) {
+          if (data.status && data.qr) {
             imgEl.src = data.qr;
+            imgEl.style.display = 'block';
             statusEl.textContent = '📸 QR tersedia, silakan scan di WhatsApp';
           } else {
+            imgEl.style.display = 'none';
             statusEl.textContent = '✅ WhatsApp sudah terhubung';
-            imgEl.src = '';
           }
         } catch (err) {
-          document.getElementById('status').textContent =
-            '❌ Gagal mengambil QR: ' + err.message;
+          statusEl.textContent = '❌ Gagal mengambil QR: ' + err.message;
+          imgEl.style.display = 'none';
         }
       }
 
       async function fetchLog() {
+        const logEl = document.getElementById('log');
         try {
-          const res = await fetch('/logs'); // ← dari Node.js
+          const res = await fetch('/logs');
           const data = await res.json();
-          document.getElementById('log').textContent = data.log || 'Log kosong';
+          logEl.textContent = data.log || 'Log kosong';
         } catch (err) {
-          document.getElementById('log').textContent =
-            '❌ Gagal memuat log: ' + err.message;
+          logEl.textContent = '❌ Gagal memuat log: ' + err.message;
         }
       }
 
-      // Panggil saat awal
+      // Load awal
       fetchQR();
       fetchLog();
 
-      // Refresh tiap 10 detik
+      // Update tiap 10 detik
       setInterval(fetchQR, 10000);
       setInterval(fetchLog, 10000);
     </script>
