@@ -113,7 +113,7 @@ async function startSock() {
           startSock();
         }, 3000);
       }
-      process.exit(1);
+     
     }
   });
 
