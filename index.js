@@ -112,7 +112,7 @@ async function startSock() {
 
     if (connection === 'open') {
       writeLog('✅ WhatsApp berhasil terhubung.');
-      qrBase64 = null; // Hapus dari memori, tapi file dibiarkan
+      // qrBase64 = null; // Hapus dari memori, tapi file dibiarkan
     }
 
     if (connection === 'close') {
