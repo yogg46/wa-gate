@@ -188,6 +188,8 @@ app.get('/qr', (req, res) => {
     writeLog('❌ Gagal baca file qr.tmp: ' + err.message);
   }
 
+  // ← Tambahkan return ini di akhir
+  return res.send({ status: false, qr: qrBase64 || null, message: 'QR tidak tersedia' });
 });
 
 app.post('/send-message', async (req, res) => {
