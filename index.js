@@ -39,7 +39,6 @@ const PORT = process.env.PORT || 3000;
 let sock;
 let qrBase64 = null;
 const logFile = path.join(__dirname, 'gateway.log');
-const qrFile = path.join(__dirname, 'qr.tmp');
 
 // ========== Logging ==========
 function writeLog(text) {
@@ -102,21 +101,13 @@ async function startSock() {
     if (qr) {
       const base64QR = await qrcode.toDataURL(qr);
       qrBase64 = base64QR;
-      try {
-        fs.writeFileSync(qrFile, base64QR);
-        writeLog(`📸 QR diterima dan disimpan ke ${qrFile}`);
-      } catch (err) {
-        writeLog('❌ Gagal simpan QR ke file: ' + err.message);
-      }
+      writeLog('📸 QR diterima dan disimpan di memori');
     }
 
     if (connection === 'open') {
       writeLog('✅ WhatsApp berhasil terhubung.');
-       setTimeout(() => {
-        qrBase64 = null;
-        if (fs.existsSync(qrFile)) fs.unlinkSync(qrFile);
-        writeLog('🧹 QR dihapus karena koneksi sukses');
-      }, 5000);
+      qrBase64 = null; // Hapus QR segera
+      writeLog('🧹 QR dihapus karena koneksi sukses');
     }
 
     if (connection === 'close') {
@@ -173,27 +164,13 @@ startSock();
 // ========== ROUTES ==========
 
 app.get('/qr', (req, res) => {
-  writeLog('🔍 Endpoint /qr diakses');
-
   if (qrBase64) {
     writeLog('✅ Mengirim QR dari memori');
     return res.send({ status: true, qr: qrBase64 });
   }
 
-  try {
-    if (fs.existsSync(qrFile)) {
-      const data = fs.readFileSync(qrFile, 'utf8');
-      writeLog('✅ Mengirim QR dari file cadangan');
-      return res.send({ status: true, qr: data });
-    } else {
-      writeLog(`⚠️ File QR tidak ditemukan di ${qrFile}`);
-    }
-  } catch (err) {
-    writeLog('❌ Gagal baca file qr.tmp: ' + err.message);
-  }
-
-  // ← Tambahkan return ini di akhir
-  return res.send({ status: false, qr: qrBase64 || null, message: 'QR tidak tersedia' });
+  writeLog(`⚠️ QR belum tersedia di memori`);
+  return res.send({ status: false, qr: null, message: 'QR tidak tersedia' });
 });
 
 app.post('/send-message', async (req, res) => {
