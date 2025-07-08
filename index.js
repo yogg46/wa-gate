@@ -40,9 +40,19 @@ function requireLogin(req, res, next) {
   res.redirect('/login');
 }
 
-// Logging
+function getFormattedTimestamp() {
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const MM = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+  const HH = String(now.getHours()).padStart(2, '0');
+  const mm = String(now.getMinutes()).padStart(2, '0');
+  const ss = String(now.getSeconds()).padStart(2, '0');
+  return `${yyyy}-${MM}-${dd} ${HH}:${mm}:${ss}`;
+}
+
 function writeLog(msg) {
-  const timestamp = new Date().toISOString();
+  const timestamp = getFormattedTimestamp();
   fs.appendFileSync(logFile, `[${timestamp}] ${msg}\n`);
 }
 
@@ -118,12 +128,20 @@ async function startSock() {
     if (connection === 'close') {
       const code = lastDisconnect?.error?.output?.statusCode;
       writeLog(`❌ Koneksi terputus: ${code}`);
-      clearAuthFolder();
+      if (code === 401) {
+          writeLog('🔐 401 Unauthorized - Membersihkan auth folder');
+          clearAuthFolder();
+          startSock();
+        }
       if (code !== DisconnectReason.loggedOut) {
         setTimeout(() => {
           writeLog('🔄 Mencoba koneksi ulang...');
           startSock();
         }, 3000);
+        // setTimeout(() => {
+        //   writeLog('🔄 clear folder auth...');
+        //   clearAuthFolder();
+        // }, 30000);
       }
      
     }
@@ -163,20 +181,27 @@ startSock();
 
 // Routes
 app.get('/qr', (req, res) => {
+
+  // const token = req.headers.authorization;
+  // if (!token || token !== `Bearer ${process.env.LARAVEL_API_KEY}`) {
+  //   return res.status(401).json({ status: false, message: 'Unauthorized' });
+  // }
+  
+
   if (qrBase64) {
     writeLog('✅ Mengirim QR dari memori');
     return res.send({ status: true, qr: qrBase64 });
   }
 
-  try {
-    if (fs.existsSync(qrFile)) {
-      const qr = fs.readFileSync(qrFile, 'utf8');
-      writeLog('✅ Mengirim QR dari file cadangan');
-      return res.send({ status: true, qr });
-    }
-  } catch (err) {
-    writeLog(`❌ Gagal baca file QR: ${err.message}`);
-  }
+  // try {
+  //   if (fs.existsSync(qrFile)) {
+  //     const qr = fs.readFileSync(qrFile, 'utf8');
+  //     writeLog('✅ Mengirim QR dari file cadangan');
+  //     return res.send({ status: true, qr });
+  //   }
+  // } catch (err) {
+  //   writeLog(`❌ Gagal baca file QR: ${err.message}`);
+  // }
 
   return res.send({ status: false, qr: null, message: 'QR tidak tersedia' });
 });

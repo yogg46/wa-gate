@@ -68,7 +68,12 @@
         try {
           const res = await fetch('/logs');
           const data = await res.json();
-          logEl.textContent = data.log || 'Log kosong';
+          if (data.log) {
+            const lines = data.log.trim().split('\n').reverse().join('\n');
+            logEl.textContent = lines;
+          } else {
+            logEl.textContent = 'Log kosong';
+          }
         } catch (err) {
           logEl.textContent = '❌ Gagal memuat log: ' + err.message;
         }
