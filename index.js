@@ -24,15 +24,29 @@ const qrFile = path.join(__dirname, 'qr.tmp');
 let sock;
 let qrBase64 = null;
 let qrLocked = false; // Lock QR saat sedang proses scan
+let qrLockTime = null;
+function lockQR() {
+  qrLocked = true;
+  qrLockTime = Date.now();
+}
+
+function unlockQR(force = false) {
+  if (force || Date.now() - qrLockTime > 30000) {
+    qrLocked = false;
+    qrLockTime = null;
+    writeLog('⏳ QR unlocked.');
+  }
+}
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(session({
-  secret: 'secret-wa-gateway',
+  secret: process.env.SESSION_SECRET || 'secret-wa-gateway',
   resave: false,
-  saveUninitialized: true
+  saveUninitialized: true,
+  cookie: { maxAge: 1000 * 60 * 30 } // 30 menit
 }));
 
 function requireLogin(req, res, next) {
@@ -97,18 +111,13 @@ async function startSock() {
 
     if (qr && !qrLocked) {
       try {
-        qrLocked = true;
+        lockQR();
         qrBase64 = await qrcode.toDataURL(qr);
         fs.writeFileSync(qrFile, qrBase64);
         writeLog(`📸 QR diterima dan disimpan ke ${qrFile}`);
 
         // Auto unlock QR setelah 30 detik jika tidak berhasil koneksi
-        setTimeout(() => {
-          if (qrLocked) {
-            qrLocked = false;
-            writeLog('⏳ QR dibuka kembali karena timeout (tidak discan)');
-          }
-        }, 30000);
+        setTimeout(unlockQR, 30000);
 
       } catch (err) {
         writeLog(`❌ Gagal simpan QR: ${err.message}`);
@@ -131,7 +140,8 @@ async function startSock() {
       if (code === 401) {
           writeLog('🔐 401 Unauthorized - Membersihkan auth folder');
           clearAuthFolder();
-          startSock();
+          setTimeout(startSock, 2000);
+
         }
       if (code !== DisconnectReason.loggedOut) {
         setTimeout(() => {
@@ -170,6 +180,8 @@ async function startSock() {
           }
         });
         writeLog(`📤 Webhook ke Laravel OK: ${response.status}`);
+        writeLog(`📤 Webhook OK (${response.status}): ${JSON.stringify(response.data)}`);
+
       } catch (err) {
         writeLog(`❌ Gagal webhook: ${err.message}`);
       }
@@ -228,7 +240,7 @@ app.post('/send-message', async (req, res) => {
   }
 });
 
-app.get('/logs', (req, res) => {
+app.get('/logs', requireLogin, (req, res) => {
   fs.readFile(logFile, 'utf8', (err, data) => {
     if (err) return res.status(500).json({ log: `Gagal membaca log: ${err.message}` });
     const lines = data.trim().split('\n').slice(-100).join('\n');
@@ -295,6 +307,21 @@ function getLocalIp() {
   }
   return 'localhost';
 }
+
+process.on('SIGINT', async () => {
+  writeLog('🛑 Server dimatikan manual.');
+  if (sock) await sock.ws.close();
+  process.exit(0);
+});
+
+app.get('/health', (req, res) => {
+  res.json({
+    status: sock?.ws?.readyState === 1 ? 'connected' : 'disconnected',
+    memory: process.memoryUsage(),
+    uptime: process.uptime()
+  });
+});
+
 
 const host = getLocalIp();
 app.listen(PORT, () => {
