@@ -297,14 +297,15 @@ app.post('/logout', (req, res) => {
   req.session.destroy(() => res.redirect('/login'));
 });
 
-app.get('/dashboard', requireLogin, (req, res) => {
-  res.send(`
-    <h2>📋 Dashboard WA Gateway</h2>
-    <p><a href="/qrcode">Lihat QR</a></p>
-    <p><a href="/view-log">Lihat Log</a></p>
-    <form method="POST" action="/logout"><button>Logout</button></form>
-  `);
+app.get('/dashboard',requireLogin, (req, res) => {
+  const htmlPath = path.join(__dirname, 'dashboard.html');
+  fs.readFile(htmlPath, 'utf8', (err, data) => {
+    if (err) return res.status(500).send('Gagal memuat dashboard');
+    const rendered = data.replace('{{API_KEY}}', process.env.LARAVEL_API_KEY || '');
+    res.send(rendered);
+  });
 });
+
 
 app.get('/view-log', requireAuth, (req, res) => {
   fs.readFile(logFile, 'utf8', (err, data) => {

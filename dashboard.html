@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WhatsApp Gateway Dashboard</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        padding: 20px;
+        max-width: 700px;
+        margin: auto;
+      }
+      h2 {
+        margin-bottom: 10px;
+      }
+      button {
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #0056b3;
+      }
+      #qr-img {
+        display: none;
+        width: 250px;
+        border: 1px solid #ccc;
+        margin-top: 10px;
+        margin-bottom: 10px;
+      }
+      #status {
+        font-weight: bold;
+        margin: 10px 0;
+      }
+      #log {
+        white-space: pre-wrap;
+        background: #f9f9f9;
+        padding: 10px;
+        border: 1px solid #ddd;
+        height: 250px;
+        overflow-y: scroll;
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>📡 WhatsApp Gateway Dashboard</h2>
+    <div id="status">🔄 Mengecek status...</div>
+    <img id="qr-img" alt="QR akan muncul di sini" />
+    <p><button id="restart-btn">🔄 Restart Gateway</button></p>
+
+    <h3>📋 Log Aktivitas</h3>
+    <div id="log">Memuat log...</div>
+
+    <script>
+      const API_KEY = '{{API_KEY}}'; // ini akan diganti oleh Node.js
+
+      async function fetchQR() {
+        const imgEl = document.getElementById('qr-img');
+        const statusEl = document.getElementById('status');
+        try {
+          const res = await fetch('/qr', {
+            headers: { Authorization: 'Bearer ' + API_KEY },
+          });
+          const data = await res.json();
+          if (data.status && data.qr) {
+            imgEl.src = data.qr;
+            imgEl.style.display = 'block';
+            statusEl.textContent = '📸 QR tersedia, silakan scan di WhatsApp';
+          } else {
+            imgEl.style.display = 'none';
+            statusEl.textContent = '✅ WhatsApp sudah terhubung';
+          }
+        } catch (err) {
+          statusEl.textContent = '❌ Gagal mengambil QR: ' + err.message;
+          imgEl.style.display = 'none';
+        }
+      }
+
+      async function fetchLog() {
+        const logEl = document.getElementById('log');
+        try {
+          const res = await fetch('/logs', {
+            headers: { Authorization: 'Bearer ' + API_KEY },
+          });
+          const data = await res.json();
+          logEl.textContent = data.log
+            ? data.log.trim().split('\\n').reverse().join('\\n')
+            : 'Log kosong';
+        } catch (err) {
+          logEl.textContent = '❌ Gagal memuat log: ' + err.message;
+        }
+      }
+
+      async function restartGateway() {
+        if (!confirm('Yakin ingin restart gateway?')) return;
+        try {
+          const res = await fetch('/restart', {
+            method: 'POST',
+            headers: { Authorization: 'Bearer ' + API_KEY },
+          });
+          const data = await res.json();
+          alert(data.message);
+        } catch (err) {
+          alert('Gagal restart: ' + err.message);
+        }
+      }
+
+      document
+        .getElementById('restart-btn')
+        .addEventListener('click', restartGateway);
+
+      // load awal
+      fetchQR();
+      fetchLog();
+
+      // refresh tiap 10 detik
+      setInterval(fetchQR, 10000);
+      setInterval(fetchLog, 10000);
+    </script>
+  </body>
+</html>
