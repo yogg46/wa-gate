@@ -30,6 +30,19 @@
         height: 300px;
         overflow-y: scroll;
       }
+      #restart-btn {
+        margin: 10px 0;
+        padding: 8px 12px;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+      #restart-btn:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+      }
     </style>
   </head>
   <body>
@@ -37,16 +50,27 @@
     <img id="qr-img" src="" alt="QR akan muncul di sini" />
     <div id="status">🔄 Mengambil status koneksi...</div>
 
+    <button id="restart-btn">🔄 Restart Gateway</button>
+
     <h3>📋 Log Aktivitas</h3>
     <div id="log">Memuat log...</div>
 
     <script>
+      // Sisipkan API Key dari Laravel saat render (atau bisa langsung hardcode di sini)
+      const API_KEY = "{{ env('LARAVEL_API_KEY', 'your-api-key-here') }}";
+
       async function fetchQR() {
         const imgEl = document.getElementById('qr-img');
         const statusEl = document.getElementById('status');
 
         try {
-          const res = await fetch('/qr');
+          const res = await fetch('/qr', {
+            headers: { Authorization: `Bearer ${API_KEY}` },
+          });
+          if (res.status === 401) {
+            statusEl.textContent = '❌ Unauthorized - Token salah';
+            return;
+          }
           const data = await res.json();
 
           if (data.status && data.qr) {
@@ -66,7 +90,13 @@
       async function fetchLog() {
         const logEl = document.getElementById('log');
         try {
-          const res = await fetch('/logs');
+          const res = await fetch('/logs', {
+            headers: { Authorization: `Bearer ${API_KEY}` },
+          });
+          if (res.status === 401) {
+            logEl.textContent = '❌ Unauthorized - Token salah';
+            return;
+          }
           const data = await res.json();
           if (data.log) {
             const lines = data.log.trim().split('\n').reverse().join('\n');
@@ -78,6 +108,36 @@
           logEl.textContent = '❌ Gagal memuat log: ' + err.message;
         }
       }
+
+      async function restartGateway() {
+        const btn = document.getElementById('restart-btn');
+        btn.disabled = true;
+        btn.textContent = '⏳ Restarting...';
+        try {
+          const res = await fetch('/restart', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${API_KEY}` },
+          });
+          if (res.status === 401) {
+            alert('Unauthorized - Token salah');
+            return;
+          }
+          const data = await res.json();
+          alert(data.message);
+          setTimeout(fetchQR, 3000);
+        } catch (err) {
+          alert('Gagal restart: ' + err.message);
+        } finally {
+          setTimeout(() => {
+            btn.disabled = false;
+            btn.textContent = '🔄 Restart Gateway';
+          }, 5000);
+        }
+      }
+
+      document
+        .getElementById('restart-btn')
+        .addEventListener('click', restartGateway);
 
       // Load awal
       fetchQR();

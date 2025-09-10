@@ -192,7 +192,7 @@ async function startSock() {
 startSock();
 
 // Routes
-app.get('/qr', (req, res) => {
+app.get('/qr',requireAuth, (req, res) => {
 
   // const token = req.headers.authorization;
   // if (!token || token !== `Bearer ${process.env.LARAVEL_API_KEY}`) {
@@ -240,7 +240,7 @@ app.post('/send-message', async (req, res) => {
   }
 });
 
-app.get('/logs', requireLogin, (req, res) => {
+app.get('/logs',requireAuth, (req, res) => {
   fs.readFile(logFile, 'utf8', (err, data) => {
     if (err) return res.status(500).json({ log: `Gagal membaca log: ${err.message}` });
     const lines = data.trim().split('\n').slice(-100).join('\n');
@@ -269,6 +269,30 @@ app.post('/login', (req, res) => {
   }
 });
 
+app.post('/restart', requireAuth, async (req, res) => {
+  try {
+    writeLog('🔄 Restart Gateway diminta via dashboard');
+    if (sock?.ws?.readyState === 1) {
+      await sock.ws.close();
+      writeLog('🔌 Koneksi lama ditutup');
+    }
+    setTimeout(() => startSock(), 1000); // restart setelah 1 detik
+    res.json({ status: true, message: 'Gateway sedang direstart...' });
+  } catch (err) {
+    writeLog(`❌ Gagal restart: ${err.message}`);
+    res.status(500).json({ status: false, message: 'Gagal restart', error: err.message });
+  }
+});
+
+function requireAuth(req, res, next) {
+  const token = req.headers.authorization;
+  if (!token || token !== `Bearer ${process.env.LARAVEL_API_KEY}`) {
+    return res.status(401).json({ status: false, message: 'Unauthorized' });
+  }
+  next();
+}
+
+
 app.post('/logout', (req, res) => {
   req.session.destroy(() => res.redirect('/login'));
 });
@@ -282,7 +306,7 @@ app.get('/dashboard', requireLogin, (req, res) => {
   `);
 });
 
-app.get('/view-log', requireLogin, (req, res) => {
+app.get('/view-log', requireAuth, (req, res) => {
   fs.readFile(logFile, 'utf8', (err, data) => {
     if (err) return res.send('Gagal membaca log.');
     const content = data.trim().split('\n').slice(-100).join('<br/>');
@@ -290,7 +314,7 @@ app.get('/view-log', requireLogin, (req, res) => {
   });
 });
 
-app.get('/qrcode', requireLogin, (req, res) => {
+app.get('/qrcode', requireAuth, (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
