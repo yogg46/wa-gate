@@ -169,6 +169,8 @@ async function startSock() {
     const matched = ['pinjam ruang', 'lihat ruang'].find(k => lower.includes(k));
     if (matched) {
       writeLog(`📩 Keyword "${matched}" dari ${from}: ${body}`);
+      writeLog(`🔑 API Key dipakai: ${process.env.LARAVEL_API_KEY}`);
+
       try {
         const response = await axios.post(process.env.LARAVEL_WEBHOOK_URL, {
           from, body, timestamp: msg.messageTimestamp
