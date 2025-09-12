@@ -333,11 +333,7 @@ function getLocalIp() {
   return 'localhost';
 }
 
-process.on('SIGINT', async () => {
-  writeLog('🛑 Server dimatikan manual.');
-  if (sock) await sock.ws.close();
-  process.exit(0);
-});
+ 
 
 app.get('/health', (req, res) => {
   res.json({
