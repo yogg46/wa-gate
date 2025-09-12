@@ -141,7 +141,6 @@ async function startSock() {
           writeLog('🔐 401 Unauthorized - Membersihkan auth folder');
           clearAuthFolder();
           setTimeout(startSock, 2000);
-
         }
       if (code !== DisconnectReason.loggedOut) {
         setTimeout(() => {

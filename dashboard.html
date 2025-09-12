@@ -89,8 +89,9 @@
           });
           const data = await res.json();
           logEl.textContent = data.log
-            ? data.log.trim().split('\\n').reverse().join('\\n')
+            ? data.log.trim().split('\n').join('\n')
             : 'Log kosong';
+          logEl.scrollTop = 0; // otomatis scroll ke atas (log terbaru kelihatan)
         } catch (err) {
           logEl.textContent = '❌ Gagal memuat log: ' + err.message;
         }
