@@ -257,8 +257,10 @@ app.post('/send-message', async (req, res) => {
   try {
     const jid = to.includes('@s.whatsapp.net') ? to : `${to}@s.whatsapp.net`;
     await sock.sendMessage(jid, { text: message });
+    // ambil hanya 100 karakter pertama dan hapus newline agar rapih
+    const shortMessage = message.replace(/\n/g, ' ').slice(0, 100);
     writeLog(`📨 Pesan terkirim ke ${to}`);
-    writeLog(`📨 Pesan: ${message}`);
+    writeLog(`📨 Ringkasan Pesan: ${shortMessage}${message.length > 100 ? '...' : ''}`);
     res.json({ status: true, message: 'Pesan berhasil dikirim' });
   } catch (err) {
     writeLog(`❌ Gagal kirim pesan ke ${to}: ${err.message}`);
