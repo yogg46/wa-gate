@@ -81,15 +81,39 @@ function rotateLogIfNeeded() {
   try {
     if (fs.existsSync(logFile)) {
       const stats = fs.statSync(logFile);
-      const maxSize = 1 * 1024 * 1024;
+      const maxSize = 1 * 1024 * 1024; // 1MB
       if (stats.size >= maxSize) {
         const backup = `gateway-${Date.now()}.log`;
         fs.renameSync(logFile, path.join(__dirname, backup));
         writeLog('📁 Log diputar karena ukuran > 1MB');
+        cleanupOldLogs(); // panggil pembersihan log lama
       }
     }
   } catch (e) {
-    console.error('❌ Log rotate error:', e.message);
+    writeLog('❌ Log rotate error:', e.message);
+  }
+}
+
+function cleanupOldLogs() {
+  try {
+    const files = fs.readdirSync(__dirname)
+      .filter(file => file.startsWith('gateway-') && file.endsWith('.log'))
+      .map(file => ({
+        name: file,
+        time: fs.statSync(path.join(__dirname, file)).mtime.getTime()
+      }))
+      .sort((a, b) => a.time - b.time); // urutkan dari paling lama
+
+    const maxFiles = 3; // simpan hanya 5 file backup terakhir
+    if (files.length > maxFiles) {
+      const toDelete = files.slice(0, files.length - maxFiles);
+      toDelete.forEach(file => {
+        fs.unlinkSync(path.join(__dirname, file.name));
+        writeLog(`🗑️ Log lama dihapus: ${file.name}`);
+      });
+    }
+  } catch (e) {
+    writeLog('❌ Cleanup log error:', e.message);
   }
 }
 
