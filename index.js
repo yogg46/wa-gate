@@ -258,6 +258,7 @@ app.post('/send-message', async (req, res) => {
     const jid = to.includes('@s.whatsapp.net') ? to : `${to}@s.whatsapp.net`;
     await sock.sendMessage(jid, { text: message });
     writeLog(`📨 Pesan terkirim ke ${to}`);
+    writeLog(`📨 Pesan: ${message}`);
     res.json({ status: true, message: 'Pesan berhasil dikirim' });
   } catch (err) {
     writeLog(`❌ Gagal kirim pesan ke ${to}: ${err.message}`);
