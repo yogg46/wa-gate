@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Broadcast Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        input[type="text"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .phone-input {
+            min-height: 150px;
+        }
+
+        .hint {
+            font-size: 12px;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status-container {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .status-container.active {
+            display: block;
+        }
+
+        .status-item {
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-item.success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+
+        .status-item.error {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+
+        .status-item.pending {
+            background: #fff3cd;
+            color: #856404;
+            border-left: 4px solid #ffc107;
+        }
+
+        .progress {
+            margin-top: 15px;
+            font-weight: 600;
+            color: #667eea;
+            text-align: center;
+        }
+
+        .icon {
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>
+            <span class="icon">📱</span>
+            WhatsApp Broadcast Tool
+        </h1>
+        <p class="subtitle">Kirim pesan WhatsApp ke banyak nomor sekaligus</p>
+
+        <form id="broadcastForm">
+
+
+            <div class="form-group">
+                <label for="phoneNumbers">Nomor Telepon</label>
+                <textarea id="phoneNumbers" class="phone-input" placeholder="628123456789&#10;628987654321&#10;628111222333" required></textarea>
+                <div class="hint">Masukkan nomor telepon (format: 628xxx), satu nomor per baris</div>
+            </div>
+
+            <div class="form-group">
+                <label for="message">Pesan</label>
+                <textarea id="message" placeholder="Ketik pesan Anda di sini..." required></textarea>
+                <div class="hint">Pesan yang akan dikirim ke semua nomor</div>
+            </div>
+
+            <button type="submit" class="btn" id="sendBtn">
+                🚀 Kirim Broadcast
+            </button>
+        </form>
+
+        <div class="status-container" id="statusContainer">
+            <h3 style="margin-bottom: 15px; color: #333;">Status Pengiriman</h3>
+            <div id="statusList"></div>
+            <div class="progress" id="progress"></div>
+        </div>
+    </div>
+
+    <script>
+        // Hardcoded Bearer Token
+        const BEARER_TOKEN = 'Bearer wa_gate_51NfT2eSdKjXy7xJ9aBc3dEfGh4IjKlMnOpQrStUvWxYz1234567890AbCd';
+
+        const form = document.getElementById('broadcastForm');
+        const sendBtn = document.getElementById('sendBtn');
+        const statusContainer = document.getElementById('statusContainer');
+        const statusList = document.getElementById('statusList');
+        const progress = document.getElementById('progress');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const phoneNumbers = document.getElementById('phoneNumbers').value
+                .split('\n')
+                .map(num => num.trim())
+                .filter(num => num.length > 0);
+            const message = document.getElementById('message').value.trim();
+
+            if (phoneNumbers.length === 0) {
+                alert('Harap masukkan minimal satu nomor telepon');
+                return;
+            }
+
+            // Reset status
+            statusContainer.classList.add('active');
+            statusList.innerHTML = '';
+            sendBtn.disabled = true;
+            sendBtn.textContent = '⏳ Mengirim...';
+
+            let successCount = 0;
+            let failCount = 0;
+
+            for (let i = 0; i < phoneNumbers.length; i++) {
+                const phone = phoneNumbers[i];
+                
+                // Update progress
+                progress.textContent = `Mengirim ${i + 1} dari ${phoneNumbers.length} pesan...`;
+
+                // Create status item
+                const statusItem = document.createElement('div');
+                statusItem.className = 'status-item pending';
+                statusItem.innerHTML = `<span>⏳</span> <span>Mengirim ke ${phone}...</span>`;
+                statusList.appendChild(statusItem);
+
+                try {
+                    const response = await fetch('http://192.168.27.198:3000/send-message', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${BEARER_TOKEN}`
+                        },
+                        body: JSON.stringify({
+                            phone: phone,
+                            message: message
+                        })
+                    });
+
+                    if (response.ok) {
+                        statusItem.className = 'status-item success';
+                        statusItem.innerHTML = `<span>✅</span> <span>Berhasil ke ${phone}</span>`;
+                        successCount++;
+                    } else {
+                        const error = await response.text();
+                        statusItem.className = 'status-item error';
+                        statusItem.innerHTML = `<span>❌</span> <span>Gagal ke ${phone} - ${error}</span>`;
+                        failCount++;
+                    }
+                } catch (error) {
+                    statusItem.className = 'status-item error';
+                    statusItem.innerHTML = `<span>❌</span> <span>Gagal ke ${phone} - ${error.message}</span>`;
+                    failCount++;
+                }
+
+                // Delay between requests (optional, to avoid rate limiting)
+                if (i < phoneNumbers.length - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                }
+            }
+
+            // Final status
+            progress.textContent = `✨ Selesai! Berhasil: ${successCount}, Gagal: ${failCount}`;
+            sendBtn.disabled = false;
+            sendBtn.textContent = '🚀 Kirim Broadcast';
+        });
+    </script>
+</body>
+</html>

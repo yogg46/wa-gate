@@ -26,3 +26,22 @@
 [2025-07-08 10:19:00] 🔄 Mencoba koneksi ulang...
 [2025-07-08 10:19:00] ✅ Mengirim QR dari memori
 [2025-07-08 10:19:07] ⏳ QR dibuka kembali karena timeout (tidak discan)
+[2025-10-01 14:30:04] 🚀 Server aktif di http://192.168.27.198:3000
+[2025-10-01 14:30:06] 📸 QR diterima dan disimpan ke D:\laragon\www\wa-gate\qr.tmp
+[2025-10-01 14:30:36] ⏳ QR unlocked.
+[2025-10-01 14:31:06] 📸 QR diterima dan disimpan ke D:\laragon\www\wa-gate\qr.tmp
+[2025-10-01 14:31:36] ⏳ QR unlocked.
+[2025-10-01 14:31:46] 📸 QR diterima dan disimpan ke D:\laragon\www\wa-gate\qr.tmp
+[2025-10-01 14:32:16] ⏳ QR unlocked.
+[2025-10-01 14:32:26] 📸 QR diterima dan disimpan ke D:\laragon\www\wa-gate\qr.tmp
+[2025-10-01 14:32:46] ❌ Koneksi terputus: 408
+[2025-10-01 14:32:49] 🔄 Mencoba koneksi ulang...
+[2025-10-01 14:32:56] ⏳ QR unlocked.
+[2025-10-01 14:33:50] 📸 QR diterima dan disimpan ke D:\laragon\www\wa-gate\qr.tmp
+[2025-10-01 14:34:20] ⏳ QR unlocked.
+[2025-10-01 14:34:30] 📸 QR diterima dan disimpan ke D:\laragon\www\wa-gate\qr.tmp
+[2025-10-01 14:35:00] ⏳ QR unlocked.
+[2025-10-01 14:35:10] 📸 QR diterima dan disimpan ke D:\laragon\www\wa-gate\qr.tmp
+[2025-10-01 14:35:30] ❌ Koneksi terputus: 408
+[2025-10-01 14:35:33] 🔄 Mencoba koneksi ulang...
+[2025-10-01 14:35:40] ⏳ QR unlocked.
