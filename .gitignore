@@ -1,0 +1,5 @@
+.env
+qr.temp
+gateway.log
+/logs
+/auth
