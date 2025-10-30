@@ -250,24 +250,10 @@
         const statusList = document.getElementById('statusList');
         const progress = document.getElementById('progress');
 
-        // Load config saat halaman dimuat
-        window.addEventListener('DOMContentLoaded', async () => {
-            const configLoaded = await loadConfig();
-            if (!configLoaded) {
-                sendBtn.disabled = true;
-            }
-        });
-
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
             hideError();
-
-            // Pastikan config sudah dimuat
-            if (!API_CONFIG) {
-                showError('Konfigurasi belum dimuat. Silakan refresh halaman.');
-                return;
-            }
 
             const phoneNumbers = document.getElementById('phoneNumbers').value
                 .split('\n')
