@@ -24,7 +24,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
 
         .navbar h1 {
@@ -41,9 +41,9 @@
         }
 
         .btn {
-            background: rgba(255,255,255,0.2);
+            background: rgba(255, 255, 255, 0.2);
             color: white;
-            border: 1px solid rgba(255,255,255,0.3);
+            border: 1px solid rgba(255, 255, 255, 0.3);
             padding: 8px 16px;
             border-radius: 8px;
             cursor: pointer;
@@ -56,7 +56,7 @@
         }
 
         .btn:hover {
-            background: rgba(255,255,255,0.3);
+            background: rgba(255, 255, 255, 0.3);
             transform: translateY(-2px);
         }
 
@@ -86,13 +86,13 @@
             background: white;
             border-radius: 15px;
             padding: 25px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
             transition: transform 0.3s, box-shadow 0.3s;
         }
 
         .card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 5px 20px rgba(0,0,0,0.12);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.12);
         }
 
         .card-header {
@@ -169,11 +169,17 @@
             box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
         }
 
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         .log-container {
             background: white;
             border-radius: 15px;
             padding: 25px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
         }
 
         .log-header {
@@ -181,28 +187,6 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
-        }
-
-        .log-tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        .tab {
-            padding: 8px 16px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.3s;
-            background: white;
-        }
-
-        .tab.active {
-            background: #667eea;
-            color: white;
-            border-color: #667eea;
         }
 
         #log {
@@ -268,7 +252,9 @@
             right: 0;
             background: white;
             min-width: 200px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            max-height: 300px;
+            overflow-y: auto;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
             border-radius: 8px;
             z-index: 1;
             margin-top: 5px;
@@ -301,6 +287,7 @@
             border-top: 3px solid #667eea;
             border-radius: 50%;
             animation: spin 1s linear infinite;
+            vertical-align: middle;
         }
 
         @keyframes spin {
@@ -317,7 +304,7 @@
         </h1>
         <div class="navbar-right">
             <a href="/broadcast" class="btn">📤 Broadcast</a>
-            <form method="POST" action="/logout" style="margin: 0;">
+            <form method="POST" action="/logout" style="margin: 0">
                 <button type="submit" class="btn btn-danger">🚪 Logout</button>
             </form>
         </div>
@@ -359,13 +346,13 @@
         <div class="log-container">
             <div class="log-header">
                 <div>
-                    <h2 style="font-size: 20px; color: #333;">📋 Log Aktivitas</h2>
-                    <p style="font-size: 13px; color: #666; margin-top: 5px;">Log hari ini - Auto refresh setiap 10 detik</p>
+                    <h2 style="font-size: 20px; color: #333">📋 Log Aktivitas</h2>
+                    <p style="font-size: 13px; color: #666; margin-top: 5px">
+                        Log hari ini - Auto refresh setiap 10 detik
+                    </p>
                 </div>
                 <div class="dropdown">
-                    <button class="btn" id="logMenuBtn">
-                        📁 Riwayat Log
-                    </button>
+                    <button class="btn" id="logMenuBtn">📁 Riwayat Log</button>
                     <div class="dropdown-content" id="logDropdown"></div>
                 </div>
             </div>
@@ -374,8 +361,33 @@
     </div>
 
     <script>
-        const API_KEY = '{{LARAVEL_API_KEY}}';
+        let API_KEY = '{{LARAVEL_API_KEY}}';
         let autoRefreshInterval;
+
+        // Fungsi untuk memastikan API Key valid
+        async function ensureApiKey() {
+            // Cek apakah API_KEY sudah valid dari server-side rendering
+            if (API_KEY && API_KEY !== '{{LARAVEL_API_KEY}}' && API_KEY !== 'undefined' && API_KEY.length > 10) {
+                console.log('✅ API Key loaded from server:', API_KEY.substring(0, 15) + '...');
+                return true;
+            }
+
+            // Jika tidak valid, coba ambil dari /api/config
+            console.log('⚠️ API Key tidak valid, mengambil dari /api/config...');
+            try {
+                const response = await fetch('/api/config');
+                if (!response.ok) {
+                    throw new Error('Gagal mengambil konfigurasi');
+                }
+                const config = await response.json();
+                API_KEY = config.apiKey;
+                console.log('✅ API Key loaded from config:', API_KEY.substring(0, 15) + '...');
+                return true;
+            } catch (error) {
+                console.error('❌ Error loading config:', error);
+                return false;
+            }
+        }
 
         async function fetchQR() {
             const imgEl = document.getElementById('qr-img');
@@ -410,7 +422,7 @@
                 else if (line.includes('❌') || line.includes('Gagal')) className = 'log-error';
                 else if (line.includes('⚠️') || line.includes('warning')) className = 'log-warning';
                 else if (line.includes('📸') || line.includes('📩') || line.includes('📨')) className = 'log-info';
-                
+
                 const timeMatch = line.match(/\[(.*?)\]/);
                 if (timeMatch) {
                     const time = timeMatch[1];
@@ -446,9 +458,9 @@
                 });
                 const data = await res.json();
                 const dropdown = document.getElementById('logDropdown');
-                
+
                 if (data.status && data.logs.length > 0) {
-                    dropdown.innerHTML = data.logs.map(log => 
+                    dropdown.innerHTML = data.logs.map(log =>
                         `<div class="dropdown-item" onclick="downloadLog('${log.date}')">
                             📄 ${log.date} (${(log.size / 1024).toFixed(2)} KB)
                         </div>`
@@ -462,7 +474,27 @@
         }
 
         function downloadLog(date) {
-            window.location.href = `/logs/download/${date}?auth=${encodeURIComponent('Bearer ' + API_KEY)}`;
+            fetch(`/logs/download/${date}`, {
+                headers: { Authorization: 'Bearer ' + API_KEY }
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Gagal download log');
+                return response.blob();
+            })
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `gateway-${date}.log`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            })
+            .catch(err => {
+                alert('Gagal download log: ' + err.message);
+            });
+
             document.getElementById('logDropdown').classList.remove('show');
         }
 
@@ -471,7 +503,7 @@
             const btn = document.getElementById('restart-btn');
             btn.disabled = true;
             btn.innerHTML = '<span class="loading"></span> Restarting...';
-            
+
             try {
                 const res = await fetch('/restart', {
                     method: 'POST',
@@ -495,7 +527,7 @@
         // Event listeners
         document.getElementById('restart-btn').addEventListener('click', restartGateway);
         document.getElementById('refresh-btn').addEventListener('click', refreshAll);
-        
+
         document.getElementById('logMenuBtn').addEventListener('click', (e) => {
             e.stopPropagation();
             const dropdown = document.getElementById('logDropdown');
@@ -510,15 +542,25 @@
             document.getElementById('logDropdown').classList.remove('show');
         });
 
-        // Load initial data
-        fetchQR();
-        fetchLog();
+        // Initialize - Load initial data after ensuring API Key is valid
+        (async function init() {
+            const apiKeyValid = await ensureApiKey();
+            if (!apiKeyValid) {
+                document.getElementById('status').innerHTML = '❌ Gagal memuat konfigurasi';
+                document.getElementById('log').innerHTML = '<div class="log-line log-error">❌ Gagal memuat konfigurasi. Silakan refresh halaman.</div>';
+                return;
+            }
 
-        // Auto refresh every 10 seconds
-        autoRefreshInterval = setInterval(() => {
+            // Load initial data
             fetchQR();
             fetchLog();
-        }, 10000);
+
+            // Auto refresh every 10 seconds
+            autoRefreshInterval = setInterval(() => {
+                fetchQR();
+                fetchLog();
+            }, 10000);
+        })();
     </script>
 </body>
 </html>
