@@ -57,10 +57,51 @@ function validateEnv() {
 
 validateEnv();
 
-// ========== LOGGING SYSTEM WITH LEVELS ==========
+// ============ METRICS JSON MANAGEMENT ============
+
+const METRICS_FILE = path.join(__dirname, 'metrics.json');
+
+// Simpan metrics ke file JSON
+async function saveMetricsToFile(metrics) {
+  try {
+    await fs.writeFile(METRICS_FILE, JSON.stringify(metrics, null, 2), 'utf-8');
+    logger.debug('Metrics disimpan ke file', { file: METRICS_FILE });
+  } catch (err) {
+    logger.error('Gagal menyimpan metrics ke file', { error: err.message });
+  }
+}
+
+// Baca metrics dari file JSON
+async function loadMetricsFromFile() {
+  try {
+    if (fsSync.existsSync(METRICS_FILE)) {
+      const data = await fs.readFile(METRICS_FILE, 'utf-8');
+      const metrics = JSON.parse(data);
+      logger.info('Metrics dimuat dari file', { file: METRICS_FILE });
+      return metrics;
+    }
+  } catch (err) {
+    logger.warn('Gagal memuat metrics dari file', { error: err.message });
+  }
+  return null;
+}
+
+// Hapus file metrics.json
+async function deleteMetricsFile() {
+  try {
+    if (fsSync.existsSync(METRICS_FILE)) {
+      await fs.unlink(METRICS_FILE);
+      logger.info('File metrics.json dihapus', { file: METRICS_FILE });
+    }
+  } catch (err) {
+    logger.error('Gagal menghapus metrics.json', { error: err.message });
+  }
+}
+
+// ========== LOGGING SYSTEM WITH LEVELS (JAKARTA TIME) ==========
 const LOG_LEVELS = {
   ERROR: '❌',
-  WARN: '⚠️', 
+  WARN: '⚠️',
   INFO: 'ℹ️',
   SUCCESS: '✅',
   DEBUG: '🔍',
@@ -72,7 +113,6 @@ const LOG_LEVELS = {
   RESTART: '🔄',
   QUEUE: '📊'
 };
-
 
 class EnhancedLogger {
   constructor(logsDir) {
@@ -89,16 +129,28 @@ class EnhancedLogger {
     }
   }
 
+  // 🕒 Format tanggal pakai zona waktu Asia/Jakarta
   getFormattedTimestamp() {
-    const now = new Date();
-    return now.toISOString().replace('T', ' ').substring(0, 19);
+    const options = {
+      timeZone: 'Asia/Jakarta',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    };
+    const now = new Date().toLocaleString('sv-SE', options); // hasil: YYYY-MM-DD HH:mm:ss
+    return now.replace('T', ' ');
   }
 
   getLogFileName(type = 'activity') {
     const now = new Date();
-    const yyyy = now.getFullYear();
-    const MM = String(now.getMonth() + 1).padStart(2, '0');
-    const dd = String(now.getDate()).padStart(2, '0');
+    const options = { timeZone: 'Asia/Jakarta' };
+    const yyyy = new Intl.DateTimeFormat('en-CA', { ...options, year: 'numeric' }).format(now);
+    const MM = new Intl.DateTimeFormat('en-CA', { ...options, month: '2-digit' }).format(now);
+    const dd = new Intl.DateTimeFormat('en-CA', { ...options, day: '2-digit' }).format(now);
     return path.join(this.logsDir, `${type}-${yyyy}-${MM}-${dd}.log`);
   }
 
@@ -120,32 +172,21 @@ class EnhancedLogger {
     const icon = LOG_LEVELS[level] || 'ℹ️';
     const timestamp = this.getFormattedTimestamp();
 
-    const metaStr = Object.keys(metadata).length > 0 
-      ? ` | ${JSON.stringify(metadata)}` 
-      : '';
+    const metaStr =
+      Object.keys(metadata).length > 0 ? ` | ${JSON.stringify(metadata)}` : '';
 
     const logEntry = `[${timestamp}] [${level}] ${icon} ${message}${metaStr}\n`;
 
-    
-   
-
-    // Tentukan file log berdasarkan jenis
+    // Tentukan file log
     let logFile;
     if (logType === 'network') {
       logFile = this.getLogFileName('network');
     } else {
       logFile = this.getLogFileName('activity');
-      // Juga tampilkan log activity ke console
-        console.log(logEntry.trim());
+      console.log(logEntry.trim());
     }
 
     await this._appendToFile(logFile, logEntry);
-
-    // Log khusus network juga ditulis ke activity log
-    // if (logType === 'network') {
-    //   const activityLogFile = this.getLogFileName('activity');
-    //   await this._appendToFile(activityLogFile, logEntry);
-    // }
   }
 
   async rotateLog(logFile) {
@@ -161,24 +202,20 @@ class EnhancedLogger {
     }
   }
 
-  // Activity Log Methods (semua jenis log)
+  // ===== Shortcut Methods =====
   error(msg, meta) { return this.log('ERROR', msg, meta, 'activity'); }
   warn(msg, meta) { return this.log('WARN', msg, meta, 'activity'); }
   info(msg, meta) { return this.log('INFO', msg, meta, 'activity'); }
   success(msg, meta) { return this.log('SUCCESS', msg, meta, 'activity'); }
-  
   security(msg, meta) { return this.log('SECURITY', msg, meta, 'activity'); }
   message(msg, meta) { return this.log('MESSAGE', msg, meta, 'activity'); }
   qr(msg, meta) { return this.log('QR', msg, meta, 'activity'); }
   cleanup(msg, meta) { return this.log('CLEANUP', msg, meta, 'activity'); }
   restart(msg, meta) { return this.log('RESTART', msg, meta, 'activity'); }
   queue(msg, meta) { return this.log('QUEUE', msg, meta, 'activity'); }
-
-  // Network-specific Log Methods (hanya network + activity)
   network(msg, meta) { return this.log('NETWORK', msg, meta, 'network'); }
   debug(msg, meta) { return this.log('DEBUG', msg, meta, 'network'); }
 }
-
 const logger = new EnhancedLogger(path.join(__dirname, 'logs'));
 
 // ========== MESSAGE QUEUE SYSTEM ==========
@@ -448,6 +485,47 @@ async function clearAuthFolder() {
     logger.error('Gagal menghapus folder auth', { error: err.message });
   }
 }
+// Update metrics dan simpan ke file
+async function updateMetrics() {
+  const memUsage = process.memoryUsage();
+  const uptime = process.uptime();
+  
+  const metrics = {
+    timestamp: new Date().toISOString(),
+    connection: {
+      whatsapp: connectionMetrics.connected && sock && sock.user && sock.user.id ? 'connected' : 'disconnected',
+      ...connectionMetrics,
+      user: sock?.user ? {
+        id: sock.user.id,
+        name: sock.user.name
+      } : null
+    },
+    messageQueue: messageQueue.getMetrics(),
+    process: {
+      uptime: {
+        seconds: Math.floor(uptime),
+        formatted: `${Math.floor(uptime / 3600)}h ${Math.floor((uptime % 3600) / 60)}m ${Math.floor(uptime % 60)}s`
+      },
+      memory: {
+        rss: `${(memUsage.rss / 1024 / 1024).toFixed(2)} MB`,
+        heapUsed: `${(memUsage.heapUsed / 1024 / 1024).toFixed(2)} MB`,
+        heapTotal: `${(memUsage.heapTotal / 1024 / 1024).toFixed(2)} MB`,
+        external: `${(memUsage.external / 1024 / 1024).toFixed(2)} MB`
+      }
+    },
+    system: {
+      platform: os.platform(),
+      arch: os.arch(),
+      nodeVersion: process.version,
+      cpuCount: os.cpus().length,
+      totalMemory: `${(os.totalmem() / 1024 / 1024 / 1024).toFixed(2)} GB`,
+      freeMemory: `${(os.freemem() / 1024 / 1024 / 1024).toFixed(2)} GB`
+    }
+  };
+  
+  await saveMetricsToFile(metrics);
+  return metrics;
+}
 
 async function startSock() {
   try {
@@ -487,6 +565,9 @@ async function startSock() {
         connectionMetrics.reconnectAttempts = 0;
         
         logger.success('WhatsApp berhasil terhubung');
+        // Update dan simpan metrics saat terhubung
+        await updateMetrics();
+
          try {
         if (sock.user?.id) {
           await sock.sendMessage(sock.user.id, { 
@@ -521,6 +602,8 @@ async function startSock() {
         const reason = lastDisconnect?.error?.message || 'Unknown';
         
         logger.warn('Koneksi WhatsApp terputus', { code, reason });
+                // HAPUS METRICS FILE SAAT KONEKSI DITUTUP
+        await deleteMetricsFile();
 
         if (code === 401) {
           logger.security('Sesi tidak valid (401) - Membersihkan auth');
@@ -543,6 +626,9 @@ async function startSock() {
       if (!msg.message || msg.key.fromMe) return;
 
       connectionMetrics.totalMessages++;
+
+            // Update metrics setiap ada pesan masuk
+      await updateMetrics();
       
       const from = msg.key.remoteJid;
       const body = msg.message?.conversation || msg.message?.extendedTextMessage?.text || '';
