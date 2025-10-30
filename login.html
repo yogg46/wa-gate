@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login - WhatsApp Gateway</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+
+      .login-container {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        padding: 50px 40px;
+        width: 100%;
+        max-width: 400px;
+        animation: slideUp 0.5s ease;
+      }
+
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .logo {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      .logo-icon {
+        font-size: 60px;
+        margin-bottom: 10px;
+      }
+
+      h1 {
+        text-align: center;
+        color: #333;
+        font-size: 28px;
+        margin-bottom: 10px;
+      }
+
+      .subtitle {
+        text-align: center;
+        color: #666;
+        font-size: 14px;
+        margin-bottom: 30px;
+      }
+
+      .error-message {
+        background: #fee;
+        border-left: 4px solid #dc3545;
+        color: #721c24;
+        padding: 12px 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-size: 14px;
+        display: none;
+      }
+
+      .error-message.show {
+        display: block;
+        animation: shake 0.5s;
+      }
+
+      @keyframes shake {
+        0%,
+        100% {
+          transform: translateX(0);
+        }
+        25% {
+          transform: translateX(-10px);
+        }
+        75% {
+          transform: translateX(10px);
+        }
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      label {
+        display: block;
+        color: #333;
+        font-weight: 600;
+        font-size: 14px;
+        margin-bottom: 8px;
+      }
+
+      .input-wrapper {
+        position: relative;
+      }
+
+      .input-icon {
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #999;
+        font-size: 18px;
+      }
+
+      input {
+        width: 100%;
+        padding: 14px 15px 14px 45px;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        font-size: 15px;
+        transition: all 0.3s;
+        font-family: inherit;
+      }
+
+      input:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      }
+
+      .btn-login {
+        width: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 15px;
+        border: none;
+        border-radius: 10px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        margin-top: 10px;
+      }
+
+      .btn-login:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+      }
+
+      .btn-login:active {
+        transform: translateY(0);
+      }
+
+      .footer {
+        text-align: center;
+        margin-top: 30px;
+        color: #999;
+        font-size: 13px;
+      }
+
+      .footer a {
+        color: #667eea;
+        text-decoration: none;
+        font-weight: 600;
+      }
+
+      .footer a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="login-container">
+      <div class="logo">
+        <div class="logo-icon">📱</div>
+        <h1>WhatsApp Gateway</h1>
+        <p class="subtitle">Silakan login untuk melanjutkan</p>
+      </div>
+
+      <div id="errorMessage" class="error-message">
+        ❌ Username atau password salah. Silakan coba lagi.
+      </div>
+
+      <form method="POST" action="/login" id="loginForm">
+        <div class="form-group">
+          <label for="username">Username</label>
+          <div class="input-wrapper">
+            <span class="input-icon">👤</span>
+            <input
+              type="text"
+              id="username"
+              name="username"
+              placeholder="Masukkan username"
+              required
+              autocomplete="username"
+              autofocus
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <div class="input-wrapper">
+            <span class="input-icon">🔒</span>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              placeholder="Masukkan password"
+              required
+              autocomplete="current-password"
+            />
+          </div>
+        </div>
+
+        <button type="submit" class="btn-login">🔐 Login</button>
+      </form>
+
+      <div class="footer">
+        <p>WhatsApp Gateway Dashboard v1.0</p>
+        <p>
+          Powered by
+          <a href="https://baileys.whiskeysockets.io" target="_blank"
+            >Baileys</a
+          >
+        </p>
+      </div>
+    </div>
+
+    <script>
+      // Cek jika ada error dari URL parameter
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('error') === '1') {
+        const errorMsg = document.getElementById('errorMessage');
+        errorMsg.classList.add('show');
+
+        // Hapus error setelah 3 detik
+        setTimeout(() => {
+          errorMsg.classList.remove('show');
+        }, 3000);
+      }
+
+      // Prevent form resubmission on refresh
+      if (window.history.replaceState) {
+        window.history.replaceState(
+          null,
+          null,
+          window.location.href.split('?')[0]
+        );
+      }
+    </script>
+  </body>
+</html>

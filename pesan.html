@@ -164,6 +164,21 @@
         .icon {
             font-size: 24px;
         }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #dc3545;
+        }
     </style>
 </head>
 <body>
@@ -174,9 +189,9 @@
         </h1>
         <p class="subtitle">Kirim pesan WhatsApp ke banyak nomor sekaligus</p>
 
+        <div id="errorMessage" class="error-message" style="display: none;"></div>
+
         <form id="broadcastForm">
-
-
             <div class="form-group">
                 <label for="phoneNumbers">Nomor Telepon</label>
                 <textarea id="phoneNumbers" class="phone-input" placeholder="628123456789&#10;628987654321&#10;628111222333" required></textarea>
@@ -202,8 +217,37 @@
     </div>
 
     <script>
-        // Hardcoded Bearer Token
-        const BEARER_TOKEN = 'Bearer wa_gate_51NfT2eSdKjXy7xJ9aBc3dEfGh4IjKlMnOpQrStUvWxYz1234567890AbCd';
+        // Variabel untuk menyimpan config dari server
+        let API_CONFIG = null;
+
+        // Fungsi untuk mengambil konfigurasi dari server
+        async function loadConfig() {
+            try {
+                const response = await fetch('/api/config');
+                if (!response.ok) {
+                    throw new Error('Gagal mengambil konfigurasi');
+                }
+                API_CONFIG = await response.json();
+                return true;
+            } catch (error) {
+                console.error('Error loading config:', error);
+                showError('Gagal memuat konfigurasi aplikasi. Silakan refresh halaman.');
+                return false;
+            }
+        }
+
+        // Fungsi untuk menampilkan error
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        // Fungsi untuk menyembunyikan error
+        function hideError() {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.style.display = 'none';
+        }
 
         const form = document.getElementById('broadcastForm');
         const sendBtn = document.getElementById('sendBtn');
@@ -211,8 +255,25 @@
         const statusList = document.getElementById('statusList');
         const progress = document.getElementById('progress');
 
+        // Load config saat halaman dimuat
+        window.addEventListener('DOMContentLoaded', async () => {
+            const configLoaded = await loadConfig();
+            if (!configLoaded) {
+                sendBtn.disabled = true;
+            }
+        });
+
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
+            
+            hideError();
+
+            // Pastikan config sudah dimuat
+            if (!API_CONFIG) {
+                showError('Konfigurasi belum dimuat. Silakan refresh halaman.');
+                return;
+            }
+
             const phoneNumbers = document.getElementById('phoneNumbers').value
                 .split('\n')
                 .map(num => num.trim())
@@ -220,7 +281,7 @@
             const message = document.getElementById('message').value.trim();
 
             if (phoneNumbers.length === 0) {
-                alert('Harap masukkan minimal satu nomor telepon');
+                showError('Harap masukkan minimal satu nomor telepon');
                 return;
             }
 
@@ -246,26 +307,27 @@
                 statusList.appendChild(statusItem);
 
                 try {
-                    const response = await fetch('http://192.168.27.198:3000/send-message', {
+                    const response = await fetch(`${API_CONFIG.apiUrl}/send-message`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${BEARER_TOKEN}`
+                            'Authorization': `Bearer ${API_CONFIG.apiKey}`
                         },
                         body: JSON.stringify({
-                            phone: phone,
+                            to: phone,
                             message: message
                         })
                     });
+
+                    const result = await response.json();
 
                     if (response.ok) {
                         statusItem.className = 'status-item success';
                         statusItem.innerHTML = `<span>✅</span> <span>Berhasil ke ${phone}</span>`;
                         successCount++;
                     } else {
-                        const error = await response.text();
                         statusItem.className = 'status-item error';
-                        statusItem.innerHTML = `<span>❌</span> <span>Gagal ke ${phone} - ${error}</span>`;
+                        statusItem.innerHTML = `<span>❌</span> <span>Gagal ke ${phone} - ${result.message || 'Unknown error'}</span>`;
                         failCount++;
                     }
                 } catch (error) {
