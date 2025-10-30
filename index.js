@@ -379,11 +379,7 @@ app.get('/health', (req, res) => {
 });
 
 app.get('/', (req, res) => {
-  res.send('WhatsApp Gateway is running. Please <a href="/login">login</a> to access dashboard.');
-  // tunggu 3 detik lalu redirect ke /login
-  setTimeout(() => {
-    res.redirect('/login');
-  }, 2000);
+   res.redirect('/login');
 });
 
 function getLocalIp() {
