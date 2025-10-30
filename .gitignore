@@ -1,5 +1,5 @@
 .env
-qr.temp
+qr.tmp
 gateway.log
 /logs
 /auth
