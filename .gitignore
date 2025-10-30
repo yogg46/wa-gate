@@ -3,3 +3,4 @@ qr.temp
 gateway.log
 /logs
 /auth
+.env
