@@ -34,6 +34,7 @@ const CONFIG = {
   MAX_LOGIN_ATTEMPTS: parseInt(process.env.MAX_LOGIN_ATTEMPTS) || 5,
   LOGIN_COOLDOWN_MS: parseInt(process.env.LOGIN_COOLDOWN_MS) || 15 * 60 * 1000,
   MESSAGE_RETRY_ATTEMPTS: parseInt(process.env.MESSAGE_RETRY_ATTEMPTS) || 3,
+  MAX_MESSAGE_PER_MINUTE: parseInt(process.env.MAX_MESSAGE_PER_MINUTE) || 500,
   MESSAGE_RETRY_DELAY_MS: parseInt(process.env.MESSAGE_RETRY_DELAY_MS) || 2000,
   LOG_RETENTION_DAYS: parseInt(process.env.LOG_RETENTION_DAYS) || 14,
   MAX_LOG_SIZE_MB: parseInt(process.env.MAX_LOG_SIZE_MB) || 10
@@ -296,8 +297,8 @@ const apiLimiter = rateLimit({
 
 const messageLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 30,
-  message: { status: false, message: '⏱️ Terlalu banyak pesan. Maksimal 30 pesan per menit.' }
+  max: CONFIG.MAX_MESSAGE_PER_MINUTE || 500,
+  message: { status: false, message: '⏱️ Terlalu banyak pesan. Maksimal 500 pesan per menit.' }
 });
 
 // ========== INPUT VALIDATION ==========
