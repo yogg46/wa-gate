@@ -271,7 +271,6 @@ app.get('/broadcast', requireLogin, (req, res) => {
   const htmlPath = path.join(__dirname, 'pesan.html');
   fs.readFile(htmlPath, 'utf8', (err, data) => {
     if (err) return res.status(500).send('Gagal memuat broadcast page');
-    // Jika ada placeholder di broadcast.html, replace juga
     const rendered = data.replace('{{LARAVEL_API_KEY}}', process.env.LARAVEL_API_KEY || '');
     res.send(rendered);
   });
@@ -379,12 +378,12 @@ app.post('/restart', requireAuth, async (req, res) => {
   }
 });
 
-app.get('/api/config', (req, res) => {
-  res.json({
-    apiUrl: `http://${getLocalIp()}:${PORT}`,
-    apiKey: process.env.LARAVEL_API_KEY || ''
-  });
-});
+// app.get('/api/config', (req, res) => {
+//   res.json({
+//     apiUrl: `http://${getLocalIp()}:${PORT}`,
+//     apiKey: process.env.LARAVEL_API_KEY || ''
+//   });
+// });
 
 app.get('/health', (req, res) => {
   res.json({

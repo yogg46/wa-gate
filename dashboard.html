@@ -364,29 +364,14 @@
         let API_KEY = '{{LARAVEL_API_KEY}}';
         let autoRefreshInterval;
 
-        // Fungsi untuk memastikan API Key valid
-        async function ensureApiKey() {
-            // Cek apakah API_KEY sudah valid dari server-side rendering
-            if (API_KEY && API_KEY !== '{{LARAVEL_API_KEY}}' && API_KEY !== 'undefined' && API_KEY.length > 10) {
-                console.log('✅ API Key loaded from server:', API_KEY.substring(0, 15) + '...');
-                return true;
-            }
-
-            // Jika tidak valid, coba ambil dari /api/config
-            console.log('⚠️ API Key tidak valid, mengambil dari /api/config...');
-            try {
-                const response = await fetch('/api/config');
-                if (!response.ok) {
-                    throw new Error('Gagal mengambil konfigurasi');
-                }
-                const config = await response.json();
-                API_KEY = config.apiKey;
-                console.log('✅ API Key loaded from config:', API_KEY.substring(0, 15) + '...');
-                return true;
-            } catch (error) {
-                console.error('❌ Error loading config:', error);
+        // Validasi API Key dari server-side rendering
+        function validateApiKey() {
+            if (!API_KEY || API_KEY === '{{LARAVEL_API_KEY}}' || API_KEY === 'undefined' || API_KEY.length < 10) {
+                console.error('❌ API Key tidak valid dari server');
                 return false;
             }
+            console.log('✅ API Key valid:', API_KEY.substring(0, 15) + '...');
+            return true;
         }
 
         async function fetchQR() {
@@ -542,12 +527,13 @@
             document.getElementById('logDropdown').classList.remove('show');
         });
 
-        // Initialize - Load initial data after ensuring API Key is valid
-        (async function init() {
-            const apiKeyValid = await ensureApiKey();
-            if (!apiKeyValid) {
+        // Initialize - Load initial data
+        (function init() {
+            // Validasi API Key dari server
+            if (!validateApiKey()) {
                 document.getElementById('status').innerHTML = '❌ Gagal memuat konfigurasi';
-                document.getElementById('log').innerHTML = '<div class="log-line log-error">❌ Gagal memuat konfigurasi. Silakan refresh halaman.</div>';
+                document.getElementById('status').className = 'status-badge status-disconnected';
+                document.getElementById('log').innerHTML = '<div class="log-line log-error">❌ Gagal memuat API Key. Silakan logout dan login kembali.</div>';
                 return;
             }
 

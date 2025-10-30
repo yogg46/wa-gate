@@ -217,24 +217,18 @@
     </div>
 
     <script>
-        // Variabel untuk menyimpan config dari server
-        let API_CONFIG = null;
+        // API Config dari server-side rendering
+        const API_CONFIG = {
+            apiUrl: window.location.origin,
+            apiKey: '{{LARAVEL_API_KEY}}'
+        };
 
-        // Fungsi untuk mengambil konfigurasi dari server
-        async function loadConfig() {
-            try {
-                const response = await fetch('/api/config');
-                if (!response.ok) {
-                    throw new Error('Gagal mengambil konfigurasi');
-                }
-                API_CONFIG = await response.json();
-                console.log('Config loaded:', API_CONFIG);
-                return true;
-            } catch (error) {
-                console.error('Error loading config:', error);
-                showError('Gagal memuat konfigurasi aplikasi. Silakan refresh halaman.');
-                return false;
-            }
+        // Validasi API Key
+        if (!API_CONFIG.apiKey || API_CONFIG.apiKey === '{{LARAVEL_API_KEY}}' || API_CONFIG.apiKey.length < 10) {
+            console.error('❌ API Key tidak valid');
+            showError('Konfigurasi tidak valid. Silakan logout dan login kembali.');
+        } else {
+            console.log('✅ API Config loaded:', API_CONFIG.apiUrl);
         }
 
         // Fungsi untuk menampilkan error
