@@ -165,7 +165,7 @@ class EnhancedLogger {
   warn(msg, meta) { return this.log('WARN', msg, meta, 'activity'); }
   info(msg, meta) { return this.log('INFO', msg, meta, 'activity'); }
   success(msg, meta) { return this.log('SUCCESS', msg, meta, 'activity'); }
-  debug(msg, meta) { return this.log('DEBUG', msg, meta, 'activity'); }
+  
   security(msg, meta) { return this.log('SECURITY', msg, meta, 'activity'); }
   message(msg, meta) { return this.log('MESSAGE', msg, meta, 'activity'); }
   qr(msg, meta) { return this.log('QR', msg, meta, 'activity'); }
@@ -175,6 +175,7 @@ class EnhancedLogger {
 
   // Network-specific Log Methods (hanya network + activity)
   network(msg, meta) { return this.log('NETWORK', msg, meta, 'network'); }
+  debug(msg, meta) { return this.log('DEBUG', msg, meta, 'network'); }
 }
 
 const logger = new EnhancedLogger(path.join(__dirname, 'logs'));
