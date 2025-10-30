@@ -259,11 +259,22 @@ app.post('/logout', (req, res) => {
 });
 
 app.get('/dashboard', requireLogin, (req, res) => {
-  res.sendFile(path.join(__dirname, 'dashboard.html'));
+  const htmlPath = path.join(__dirname, 'dashboard.html');
+  fs.readFile(htmlPath, 'utf8', (err, data) => {
+    if (err) return res.status(500).send('Gagal memuat dashboard');
+    const rendered = data.replace('{{LARAVEL_API_KEY}}', process.env.LARAVEL_API_KEY || '');
+    res.send(rendered);
+  });
 });
 
 app.get('/broadcast', requireLogin, (req, res) => {
-  res.sendFile(path.join(__dirname, 'pesan.html'));
+  const htmlPath = path.join(__dirname, 'pesan.html');
+  fs.readFile(htmlPath, 'utf8', (err, data) => {
+    if (err) return res.status(500).send('Gagal memuat broadcast page');
+    // Jika ada placeholder di broadcast.html, replace juga
+    const rendered = data.replace('{{LARAVEL_API_KEY}}', process.env.LARAVEL_API_KEY || '');
+    res.send(rendered);
+  });
 });
 
 app.get('/qr', requireAuth, (req, res) => {
@@ -308,6 +319,11 @@ app.get('/logs/list', requireAuth, (req, res) => {
 
 app.get('/logs/download/:date', requireAuth, (req, res) => {
   const date = req.params.date;
+  // Validate date format untuk security
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return res.status(400).json({ status: false, message: 'Format tanggal tidak valid' });
+  }
+  
   const logFile = path.join(logsDir, `gateway-${date}.log`);
   
   if (!fs.existsSync(logFile)) {
@@ -379,7 +395,7 @@ app.get('/health', (req, res) => {
 });
 
 app.get('/', (req, res) => {
-   res.redirect('/login');
+ res.redirect('/dashboard');
 });
 
 function getLocalIp() {

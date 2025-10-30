@@ -228,6 +228,7 @@
                     throw new Error('Gagal mengambil konfigurasi');
                 }
                 API_CONFIG = await response.json();
+                console.log('Config loaded:', API_CONFIG);
                 return true;
             } catch (error) {
                 console.error('Error loading config:', error);
