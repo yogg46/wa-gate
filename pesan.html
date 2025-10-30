@@ -1,333 +1,994 @@
 <!DOCTYPE html>
 <html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WhatsApp Broadcast Tool</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Broadcast Message - WhatsApp Gateway</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: #f5f7fa;
+        min-height: 100vh;
+      }
 
+      .navbar {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 15px 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+
+      .navbar h1 {
+        font-size: 22px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .navbar-right {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+      }
+
+      .btn {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        padding: 8px 16px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.3s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+      }
+
+      .btn-danger {
+        background: rgba(220, 53, 69, 0.9);
+        border-color: rgba(220, 53, 69, 1);
+      }
+
+      .btn-danger:hover {
+        background: rgba(220, 53, 69, 1);
+      }
+
+      .container {
+        max-width: 1000px;
+        margin: 30px auto;
+        padding: 0 20px;
+      }
+
+      .card {
+        background: white;
+        border-radius: 15px;
+        padding: 30px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        margin-bottom: 20px;
+      }
+
+      .card-header {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 25px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid #f0f0f0;
+      }
+
+      .card-icon {
+        font-size: 40px;
+      }
+
+      .card-title {
+        font-size: 24px;
+        font-weight: 600;
+        color: #333;
+      }
+
+      .card-subtitle {
+        font-size: 14px;
+        color: #666;
+        margin-top: 5px;
+      }
+
+      .form-group {
+        margin-bottom: 25px;
+      }
+
+      label {
+        display: block;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 10px;
+        font-size: 15px;
+      }
+
+      .label-info {
+        font-weight: 400;
+        color: #666;
+        font-size: 13px;
+        margin-left: 5px;
+      }
+
+      input,
+      textarea {
+        width: 100%;
+        padding: 12px 15px;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        font-size: 15px;
+        font-family: inherit;
+        transition: all 0.3s;
+      }
+
+      input:focus,
+      textarea:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      }
+
+      textarea {
+        resize: vertical;
+        min-height: 150px;
+        line-height: 1.6;
+      }
+
+      .char-counter {
+        text-align: right;
+        font-size: 13px;
+        color: #999;
+        margin-top: 5px;
+      }
+
+      .char-counter.warning {
+        color: #ff9800;
+        font-weight: 600;
+      }
+
+      .char-counter.danger {
+        color: #dc3545;
+        font-weight: 600;
+      }
+
+      .btn-send {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 15px 30px;
+        border-radius: 10px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        width: 100%;
+      }
+
+      .btn-send:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+      }
+
+      .btn-send:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .loading-spinner {
+        width: 20px;
+        height: 20px;
+        border: 3px solid #ffffff;
+        border-top: 3px solid transparent;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        display: none;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .alert {
+        padding: 15px 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 14px;
+      }
+
+      .alert-info {
+        background: #e7f3ff;
+        border-left: 4px solid #2196f3;
+        color: #0c5a8a;
+      }
+
+      .alert-success {
+        background: #d4edda;
+        border-left: 4px solid #28a745;
+        color: #155724;
+      }
+
+      .alert-error {
+        background: #f8d7da;
+        border-left: 4px solid #dc3545;
+        color: #721c24;
+      }
+
+      .alert-warning {
+        background: #fff3cd;
+        border-left: 4px solid #ffc107;
+        color: #856404;
+      }
+
+      .format-guide {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        margin-top: 25px;
+      }
+
+      .format-guide h4 {
+        color: #333;
+        margin-bottom: 15px;
+        font-size: 16px;
+      }
+
+      .format-guide ul {
+        list-style: none;
+        padding: 0;
+      }
+
+      .format-guide li {
+        padding: 8px 0;
+        color: #666;
+        font-size: 14px;
+      }
+
+      .format-guide code {
+        background: #e9ecef;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-family: 'Courier New', monospace;
+        color: #e83e8c;
+      }
+
+      .preview-card {
+        background: #f8f9fa;
+        border: 2px dashed #dee2e6;
+        border-radius: 10px;
+        padding: 20px;
+        margin-top: 20px;
+      }
+
+      .preview-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 15px;
+        color: #666;
+        font-weight: 600;
+        font-size: 14px;
+      }
+
+      .preview-content {
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+        min-height: 100px;
+        color: #333;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        line-height: 1.6;
+        font-size: 14px;
+      }
+
+      .preview-content.empty {
+        color: #999;
+        font-style: italic;
+      }
+
+      .recipient-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 10px;
+      }
+
+      .recipient-tag {
+        background: #667eea;
+        color: white;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .recipient-tag .remove {
+        cursor: pointer;
+        font-weight: bold;
+      }
+
+      .tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #f0f0f0;
+      }
+
+      .tab {
+        padding: 12px 24px;
+        cursor: pointer;
+        border: none;
+        background: none;
+        font-size: 15px;
+        font-weight: 500;
+        color: #666;
+        transition: all 0.3s;
+        border-bottom: 3px solid transparent;
+      }
+
+      .tab.active {
+        color: #667eea;
+        border-bottom-color: #667eea;
+      }
+
+      .tab-content {
+        display: none;
+      }
+
+      .tab-content.active {
+        display: block;
+        animation: fadeIn 0.3s;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .history-item {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        border-left: 4px solid #667eea;
+      }
+
+      .history-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-size: 13px;
+      }
+
+      .history-time {
+        color: #999;
+      }
+
+      .history-recipient {
+        color: #667eea;
+        font-weight: 600;
+      }
+
+      .history-message {
+        color: #666;
+        font-size: 14px;
+        max-height: 60px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      @media (max-width: 768px) {
         .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            padding: 40px;
+          padding: 0 15px;
         }
 
-        h1 {
-            color: #333;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        .card {
+          padding: 20px;
         }
 
-        .subtitle {
-            color: #666;
-            margin-bottom: 30px;
-            font-size: 14px;
+        .tabs {
+          overflow-x: auto;
+          white-space: nowrap;
         }
-
-        .form-group {
-            margin-bottom: 25px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 8px;
-            color: #333;
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        input[type="text"],
-        textarea {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 14px;
-            transition: all 0.3s;
-            font-family: inherit;
-        }
-
-        input[type="text"]:focus,
-        textarea:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        textarea {
-            resize: vertical;
-            min-height: 120px;
-        }
-
-        .phone-input {
-            min-height: 150px;
-        }
-
-        .hint {
-            font-size: 12px;
-            color: #888;
-            margin-top: 5px;
-        }
-
-        .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 15px 30px;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            width: 100%;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
-        }
-
-        .btn:active {
-            transform: translateY(0);
-        }
-
-        .btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .status-container {
-            margin-top: 30px;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 10px;
-            display: none;
-        }
-
-        .status-container.active {
-            display: block;
-        }
-
-        .status-item {
-            padding: 10px;
-            margin-bottom: 8px;
-            border-radius: 8px;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .status-item.success {
-            background: #d4edda;
-            color: #155724;
-            border-left: 4px solid #28a745;
-        }
-
-        .status-item.error {
-            background: #f8d7da;
-            color: #721c24;
-            border-left: 4px solid #dc3545;
-        }
-
-        .status-item.pending {
-            background: #fff3cd;
-            color: #856404;
-            border-left: 4px solid #ffc107;
-        }
-
-        .progress {
-            margin-top: 15px;
-            font-weight: 600;
-            color: #667eea;
-            text-align: center;
-        }
-
-        .icon {
-            font-size: 24px;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 20px;
-            color: #666;
-        }
-
-        .error-message {
-            background: #f8d7da;
-            color: #721c24;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            border-left: 4px solid #dc3545;
-        }
+      }
     </style>
-</head>
-<body>
-    <div class="container">
-        <h1>
-            <span class="icon">📱</span>
-            WhatsApp Broadcast Tool
-        </h1>
-        <p class="subtitle">Kirim pesan WhatsApp ke banyak nomor sekaligus</p>
-
-        <div id="errorMessage" class="error-message" style="display: none;"></div>
-
-        <form id="broadcastForm">
-            <div class="form-group">
-                <label for="phoneNumbers">Nomor Telepon</label>
-                <textarea id="phoneNumbers" class="phone-input" placeholder="628123456789&#10;628987654321&#10;628111222333" required></textarea>
-                <div class="hint">Masukkan nomor telepon (format: 628xxx), satu nomor per baris</div>
-            </div>
-
-            <div class="form-group">
-                <label for="message">Pesan</label>
-                <textarea id="message" placeholder="Ketik pesan Anda di sini..." required></textarea>
-                <div class="hint">Pesan yang akan dikirim ke semua nomor</div>
-            </div>
-
-            <button type="submit" class="btn" id="sendBtn">
-                🚀 Kirim Broadcast
-            </button>
+  </head>
+  <body>
+    <div class="navbar">
+      <h1>
+        <span>📤</span>
+        Broadcast Message
+      </h1>
+      <div class="navbar-right">
+        <a href="/dashboard" class="btn">📊 Dashboard</a>
+        <form method="POST" action="/logout" style="margin: 0">
+          <button type="submit" class="btn btn-danger">🚪 Logout</button>
         </form>
+      </div>
+    </div>
 
-        <div class="status-container" id="statusContainer">
-            <h3 style="margin-bottom: 15px; color: #333;">Status Pengiriman</h3>
-            <div id="statusList"></div>
-            <div class="progress" id="progress"></div>
+    <div class="container">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-icon">📱</span>
+          <div>
+            <div class="card-title">Kirim Pesan WhatsApp</div>
+            <div class="card-subtitle">
+              Kirim pesan ke satu atau multiple nomor WhatsApp
+            </div>
+          </div>
         </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+          <button class="tab active" onclick="switchTab('single')">
+            📩 Single Message
+          </button>
+          <button class="tab" onclick="switchTab('bulk')">
+            📤 Bulk Broadcast
+          </button>
+          <button class="tab" onclick="switchTab('history')">📋 History</button>
+        </div>
+
+        <!-- Single Message Tab -->
+        <div id="single-tab" class="tab-content active">
+          <div class="alert alert-info">
+            ℹ️ Pesan akan ditambahkan ke antrian dan dikirim secara otomatis.
+            Gunakan nomor dengan format internasional (contoh: 628123456789)
+          </div>
+
+          <div id="alert-container"></div>
+
+          <form id="sendForm">
+            <div class="form-group">
+              <label for="to">
+                Nomor Tujuan
+                <span class="label-info"
+                  >(Format: 628xxxxxxxxx atau +628xxxxxxxxx)</span
+                >
+              </label>
+              <input
+                type="text"
+                id="to"
+                name="to"
+                placeholder="Contoh: 628123456789"
+                required
+                maxlength="20"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="message">
+                Pesan
+                <span class="label-info">(Maksimal 10.000 karakter)</span>
+              </label>
+              <textarea
+                id="message"
+                name="message"
+                placeholder="Ketik pesan Anda di sini..."
+                required
+                maxlength="10000"
+              ></textarea>
+              <div class="char-counter" id="charCounter">
+                0 / 10,000 karakter
+              </div>
+            </div>
+
+            <button type="submit" class="btn-send" id="sendBtn">
+              <span id="sendIcon">📨</span>
+              <span id="sendText">Kirim Pesan</span>
+              <span class="loading-spinner" id="loadingSpinner"></span>
+            </button>
+          </form>
+
+          <div class="format-guide">
+            <h4>💡 Tips Format Pesan:</h4>
+            <ul>
+              <li>
+                🔤 <strong>Bold:</strong> <code>*teks tebal*</code> →
+                <strong>teks tebal</strong>
+              </li>
+              <li>
+                📐 <i>Italic:</i> <code>_teks miring_</code> →
+                <i>teks miring</i>
+              </li>
+              <li>
+                ~~<del>Strikethrough</del>:~~ <code>~teks dicoret~</code> →
+                <del>teks dicoret</del>
+              </li>
+              <li>
+                💻 <code>Monospace:</code> <code>```kode```</code> →
+                <code>kode</code>
+              </li>
+              <li>📝 Line break: Tekan Enter untuk baris baru</li>
+            </ul>
+          </div>
+
+          <div class="preview-card">
+            <div class="preview-header">
+              <span>👁️</span>
+              <span>Preview Pesan</span>
+            </div>
+            <div class="preview-content empty" id="previewContent">
+              Ketik pesan untuk melihat preview...
+            </div>
+          </div>
+        </div>
+
+        <!-- Bulk Broadcast Tab -->
+        <div id="bulk-tab" class="tab-content">
+          <div class="alert alert-warning">
+            ⚠️ Fitur bulk broadcast akan mengirim pesan ke multiple nomor.
+            Pastikan nomor sudah benar sebelum mengirim!
+          </div>
+
+          <div class="form-group">
+            <label for="bulkNumbers">
+              Nomor Tujuan
+              <span class="label-info"
+                >(Pisahkan dengan enter atau koma, maksimal 100 nomor)</span
+              >
+            </label>
+            <textarea
+              id="bulkNumbers"
+              placeholder="628123456789&#10;628987654321&#10;628111222333"
+              rows="6"
+            ></textarea>
+            <div class="char-counter" id="bulkCounter">0 nomor</div>
+          </div>
+
+          <div class="form-group">
+            <label for="bulkMessage"> Pesan Broadcast </label>
+            <textarea
+              id="bulkMessage"
+              placeholder="Ketik pesan broadcast..."
+              rows="6"
+              maxlength="10000"
+            ></textarea>
+            <div class="char-counter" id="bulkCharCounter">
+              0 / 10,000 karakter
+            </div>
+          </div>
+
+          <button
+            class="btn-send"
+            id="bulkSendBtn"
+            onclick="sendBulkMessages()"
+          >
+            <span>📤</span>
+            <span id="bulkSendText">Kirim Broadcast</span>
+            <span class="loading-spinner" id="bulkLoadingSpinner"></span>
+          </button>
+
+          <div id="bulkAlert"></div>
+        </div>
+
+        <!-- History Tab -->
+        <div id="history-tab" class="tab-content">
+          <div class="alert alert-info">
+            📋 Riwayat pesan yang telah dikirim hari ini
+          </div>
+
+          <div id="historyContainer">
+            <p style="text-align: center; color: #999; padding: 40px 0">
+              Belum ada riwayat pengiriman hari ini
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
 
     <script>
-        // API Config dari server-side rendering
-        const API_CONFIG = {
-            apiUrl: window.location.origin,
-            apiKey: '{{LARAVEL_API_KEY}}'
+      let API_KEY = '{{LARAVEL_API_KEY}}';
+      let messageHistory = JSON.parse(
+        localStorage.getItem('messageHistory') || '[]'
+      );
+
+      // Validate API Key
+      function validateApiKey() {
+        if (
+          !API_KEY ||
+          API_KEY === '{{LARAVEL_API_KEY}}' ||
+          API_KEY === 'undefined' ||
+          API_KEY.length < 10
+        ) {
+          showAlert(
+            '❌ API Key tidak valid. Silakan logout dan login kembali.',
+            'error'
+          );
+          document.getElementById('sendBtn').disabled = true;
+          document.getElementById('bulkSendBtn').disabled = true;
+          return false;
+        }
+        return true;
+      }
+
+      // Show alert
+      function showAlert(message, type = 'info') {
+        const container = document.getElementById('alert-container');
+        const alertClass = `alert-${type}`;
+        container.innerHTML = `<div class="alert ${alertClass}">${message}</div>`;
+
+        setTimeout(() => {
+          container.innerHTML = '';
+        }, 5000);
+      }
+
+      // Show bulk alert
+      function showBulkAlert(message, type = 'info') {
+        const container = document.getElementById('bulkAlert');
+        const alertClass = `alert-${type}`;
+        container.innerHTML = `<div class="alert ${alertClass}">${message}</div>`;
+
+        setTimeout(() => {
+          container.innerHTML = '';
+        }, 5000);
+      }
+
+      // Character counter
+      document.getElementById('message').addEventListener('input', function () {
+        const length = this.value.length;
+        const counter = document.getElementById('charCounter');
+        counter.textContent = `${length.toLocaleString()} / 10,000 karakter`;
+
+        if (length > 9000) {
+          counter.classList.add('danger');
+          counter.classList.remove('warning');
+        } else if (length > 7000) {
+          counter.classList.add('warning');
+          counter.classList.remove('danger');
+        } else {
+          counter.classList.remove('warning', 'danger');
+        }
+
+        // Update preview
+        updatePreview(this.value);
+      });
+
+      // Bulk message character counter
+      document
+        .getElementById('bulkMessage')
+        .addEventListener('input', function () {
+          const length = this.value.length;
+          const counter = document.getElementById('bulkCharCounter');
+          counter.textContent = `${length.toLocaleString()} / 10,000 karakter`;
+
+          if (length > 9000) {
+            counter.classList.add('danger');
+          } else if (length > 7000) {
+            counter.classList.add('warning');
+          } else {
+            counter.classList.remove('warning', 'danger');
+          }
+        });
+
+      // Bulk numbers counter
+      document
+        .getElementById('bulkNumbers')
+        .addEventListener('input', function () {
+          const numbers = this.value
+            .split(/[\n,]+/)
+            .filter((n) => n.trim()).length;
+          const counter = document.getElementById('bulkCounter');
+          counter.textContent = `${numbers} nomor`;
+
+          if (numbers > 100) {
+            counter.classList.add('danger');
+            counter.textContent = `${numbers} nomor (maksimal 100!)`;
+          } else if (numbers > 80) {
+            counter.classList.add('warning');
+          } else {
+            counter.classList.remove('warning', 'danger');
+          }
+        });
+
+      // Update preview
+      function updatePreview(text) {
+        const preview = document.getElementById('previewContent');
+        if (text.trim()) {
+          preview.textContent = text;
+          preview.classList.remove('empty');
+        } else {
+          preview.textContent = 'Ketik pesan untuk melihat preview...';
+          preview.classList.add('empty');
+        }
+      }
+
+      // Phone number validation
+      function validatePhoneNumber(phone) {
+        const cleaned = phone.replace(/\D/g, '');
+        if (cleaned.startsWith('0')) {
+          return '62' + cleaned.substring(1);
+        }
+        if (cleaned.startsWith('62')) {
+          return cleaned;
+        }
+        return null;
+      }
+
+      // Send single message
+      document
+        .getElementById('sendForm')
+        .addEventListener('submit', async function (e) {
+          e.preventDefault();
+
+          if (!validateApiKey()) return;
+
+          const to = document.getElementById('to').value.trim();
+          const message = document.getElementById('message').value.trim();
+
+          if (!to || !message) {
+            showAlert('❌ Nomor dan pesan harus diisi!', 'error');
+            return;
+          }
+
+          const validatedPhone = validatePhoneNumber(to);
+          if (!validatedPhone) {
+            showAlert(
+              '❌ Format nomor tidak valid. Gunakan format 08xxx atau 628xxx',
+              'error'
+            );
+            return;
+          }
+
+          const btn = document.getElementById('sendBtn');
+          const icon = document.getElementById('sendIcon');
+          const text = document.getElementById('sendText');
+          const spinner = document.getElementById('loadingSpinner');
+
+          btn.disabled = true;
+          icon.style.display = 'none';
+          text.textContent = 'Mengirim...';
+          spinner.style.display = 'inline-block';
+
+          try {
+            const res = await fetch('/send-message', {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${API_KEY}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                to: validatedPhone,
+                message: message,
+              }),
+            });
+
+            const data = await res.json();
+
+            if (data.status) {
+              showAlert('✅ ' + data.message, 'success');
+              document.getElementById('to').value = '';
+              document.getElementById('message').value = '';
+              updatePreview('');
+              document.getElementById('charCounter').textContent =
+                '0 / 10,000 karakter';
+
+              // Add to history
+              addToHistory(validatedPhone, message);
+            } else {
+              showAlert('❌ Gagal mengirim: ' + data.message, 'error');
+            }
+          } catch (err) {
+            showAlert('❌ Error: ' + err.message, 'error');
+          } finally {
+            btn.disabled = false;
+            icon.style.display = 'inline';
+            text.textContent = 'Kirim Pesan';
+            spinner.style.display = 'none';
+          }
+        });
+
+      // Send bulk messages
+      async function sendBulkMessages() {
+        if (!validateApiKey()) return;
+
+        const numbersText = document.getElementById('bulkNumbers').value;
+        const message = document.getElementById('bulkMessage').value.trim();
+
+        if (!numbersText || !message) {
+          showBulkAlert('❌ Nomor dan pesan harus diisi!', 'error');
+          return;
+        }
+
+        const numbers = numbersText
+          .split(/[\n,]+/)
+          .map((n) => n.trim())
+          .filter((n) => n)
+          .map(validatePhoneNumber)
+          .filter((n) => n);
+
+        if (numbers.length === 0) {
+          showBulkAlert('❌ Tidak ada nomor valid yang ditemukan!', 'error');
+          return;
+        }
+
+        if (numbers.length > 100) {
+          showBulkAlert('❌ Maksimal 100 nomor per broadcast!', 'error');
+          return;
+        }
+
+        const btn = document.getElementById('bulkSendBtn');
+        const text = document.getElementById('bulkSendText');
+        const spinner = document.getElementById('bulkLoadingSpinner');
+
+        btn.disabled = true;
+        text.textContent = `Mengirim ke ${numbers.length} nomor...`;
+        spinner.style.display = 'inline-block';
+
+        let success = 0;
+        let failed = 0;
+
+        for (let i = 0; i < numbers.length; i++) {
+          try {
+            const res = await fetch('/send-message', {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${API_KEY}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                to: numbers[i],
+                message: message,
+              }),
+            });
+
+            const data = await res.json();
+            if (data.status) {
+              success++;
+              addToHistory(numbers[i], message);
+            } else {
+              failed++;
+            }
+
+            text.textContent = `Progress: ${i + 1}/${numbers.length}`;
+
+            // Delay to avoid rate limiting
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+          } catch (err) {
+            failed++;
+          }
+        }
+
+        showBulkAlert(
+          `✅ Selesai! Berhasil: ${success}, Gagal: ${failed}`,
+          success > failed ? 'success' : 'warning'
+        );
+
+        if (success > 0) {
+          document.getElementById('bulkNumbers').value = '';
+          document.getElementById('bulkMessage').value = '';
+          document.getElementById('bulkCounter').textContent = '0 nomor';
+          document.getElementById('bulkCharCounter').textContent =
+            '0 / 10,000 karakter';
+        }
+
+        btn.disabled = false;
+        text.textContent = 'Kirim Broadcast';
+        spinner.style.display = 'none';
+      }
+
+      // Add to history
+      function addToHistory(to, message) {
+        const historyItem = {
+          to,
+          message: message.substring(0, 100),
+          timestamp: Date.now(),
         };
 
-        // Validasi API Key
-        if (!API_CONFIG.apiKey || API_CONFIG.apiKey === '{{LARAVEL_API_KEY}}' || API_CONFIG.apiKey.length < 10) {
-            console.error('❌ API Key tidak valid');
-            showError('Konfigurasi tidak valid. Silakan logout dan login kembali.');
-        } else {
-            console.log('✅ API Config loaded:', API_CONFIG.apiUrl);
+        messageHistory.unshift(historyItem);
+        messageHistory = messageHistory.slice(0, 50); // Keep last 50
+        localStorage.setItem('messageHistory', JSON.stringify(messageHistory));
+
+        if (
+          document.getElementById('history-tab').classList.contains('active')
+        ) {
+          loadHistory();
+        }
+      }
+
+      // Load history
+      function loadHistory() {
+        const container = document.getElementById('historyContainer');
+
+        if (messageHistory.length === 0) {
+          container.innerHTML =
+            '<p style="text-align: center; color: #999; padding: 40px 0;">Belum ada riwayat pengiriman</p>';
+          return;
         }
 
-        // Fungsi untuk menampilkan error
-        function showError(message) {
-            const errorDiv = document.getElementById('errorMessage');
-            errorDiv.textContent = message;
-            errorDiv.style.display = 'block';
+        container.innerHTML = messageHistory
+          .map(
+            (item) => `
+                <div class="history-item">
+                    <div class="history-header">
+                        <span class="history-recipient">📱 ${item.to}</span>
+                        <span class="history-time">${new Date(
+                          item.timestamp
+                        ).toLocaleString('id-ID')}</span>
+                    </div>
+                    <div class="history-message">${item.message}${
+              item.message.length >= 100 ? '...' : ''
+            }</div>
+                </div>
+            `
+          )
+          .join('');
+      }
+
+      // Switch tabs
+      function switchTab(tabName) {
+        document
+          .querySelectorAll('.tab')
+          .forEach((t) => t.classList.remove('active'));
+        document
+          .querySelectorAll('.tab-content')
+          .forEach((c) => c.classList.remove('active'));
+
+        event.target.classList.add('active');
+        document.getElementById(`${tabName}-tab`).classList.add('active');
+
+        if (tabName === 'history') {
+          loadHistory();
         }
+      }
 
-        // Fungsi untuk menyembunyikan error
-        function hideError() {
-            const errorDiv = document.getElementById('errorMessage');
-            errorDiv.style.display = 'none';
+      // Initialize
+      validateApiKey();
+
+      // Keyboard shortcuts
+      document.addEventListener('keydown', (e) => {
+        // Ctrl/Cmd + Enter to send
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+          if (
+            document.getElementById('single-tab').classList.contains('active')
+          ) {
+            document
+              .getElementById('sendForm')
+              .dispatchEvent(new Event('submit'));
+          }
         }
-
-        const form = document.getElementById('broadcastForm');
-        const sendBtn = document.getElementById('sendBtn');
-        const statusContainer = document.getElementById('statusContainer');
-        const statusList = document.getElementById('statusList');
-        const progress = document.getElementById('progress');
-
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            hideError();
-
-            const phoneNumbers = document.getElementById('phoneNumbers').value
-                .split('\n')
-                .map(num => num.trim())
-                .filter(num => num.length > 0);
-            const message = document.getElementById('message').value.trim();
-
-            if (phoneNumbers.length === 0) {
-                showError('Harap masukkan minimal satu nomor telepon');
-                return;
-            }
-
-            // Reset status
-            statusContainer.classList.add('active');
-            statusList.innerHTML = '';
-            sendBtn.disabled = true;
-            sendBtn.textContent = '⏳ Mengirim...';
-
-            let successCount = 0;
-            let failCount = 0;
-
-            for (let i = 0; i < phoneNumbers.length; i++) {
-                const phone = phoneNumbers[i];
-                
-                // Update progress
-                progress.textContent = `Mengirim ${i + 1} dari ${phoneNumbers.length} pesan...`;
-
-                // Create status item
-                const statusItem = document.createElement('div');
-                statusItem.className = 'status-item pending';
-                statusItem.innerHTML = `<span>⏳</span> <span>Mengirim ke ${phone}...</span>`;
-                statusList.appendChild(statusItem);
-
-                try {
-                    const response = await fetch(`${API_CONFIG.apiUrl}/send-message`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${API_CONFIG.apiKey}`
-                        },
-                        body: JSON.stringify({
-                            to: phone,
-                            message: message
-                        })
-                    });
-
-                    const result = await response.json();
-
-                    if (response.ok) {
-                        statusItem.className = 'status-item success';
-                        statusItem.innerHTML = `<span>✅</span> <span>Berhasil ke ${phone}</span>`;
-                        successCount++;
-                    } else {
-                        statusItem.className = 'status-item error';
-                        statusItem.innerHTML = `<span>❌</span> <span>Gagal ke ${phone} - ${result.message || 'Unknown error'}</span>`;
-                        failCount++;
-                    }
-                } catch (error) {
-                    statusItem.className = 'status-item error';
-                    statusItem.innerHTML = `<span>❌</span> <span>Gagal ke ${phone} - ${error.message}</span>`;
-                    failCount++;
-                }
-
-                // Delay between requests (optional, to avoid rate limiting)
-                if (i < phoneNumbers.length - 1) {
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                }
-            }
-
-            // Final status
-            progress.textContent = `✨ Selesai! Berhasil: ${successCount}, Gagal: ${failCount}`;
-            sendBtn.disabled = false;
-            sendBtn.textContent = '🚀 Kirim Broadcast';
-        });
+      });
     </script>
-</body>
+  </body>
 </html>

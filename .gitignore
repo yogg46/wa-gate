@@ -4,3 +4,4 @@ gateway.log
 /logs
 /auth
 .env
+.env.production

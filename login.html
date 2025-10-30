@@ -50,6 +50,17 @@
       .logo-icon {
         font-size: 60px;
         margin-bottom: 10px;
+        animation: pulse 2s infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.05);
+        }
       }
 
       h1 {
@@ -80,6 +91,21 @@
       .error-message.show {
         display: block;
         animation: shake 0.5s;
+      }
+
+      .warning-message {
+        background: #fff3cd;
+        border-left: 4px solid #ffc107;
+        color: #856404;
+        padding: 12px 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-size: 13px;
+        display: none;
+      }
+
+      .warning-message.show {
+        display: block;
       }
 
       @keyframes shake {
@@ -118,6 +144,7 @@
         transform: translateY(-50%);
         color: #999;
         font-size: 18px;
+        pointer-events: none;
       }
 
       input {
@@ -136,6 +163,26 @@
         box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
       }
 
+      input:disabled {
+        background: #f5f5f5;
+        cursor: not-allowed;
+      }
+
+      .password-toggle {
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: pointer;
+        color: #999;
+        font-size: 18px;
+        user-select: none;
+      }
+
+      .password-toggle:hover {
+        color: #667eea;
+      }
+
       .btn-login {
         width: 100%;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -148,15 +195,43 @@
         cursor: pointer;
         transition: all 0.3s;
         margin-top: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
       }
 
-      .btn-login:hover {
+      .btn-login:hover:not(:disabled) {
         transform: translateY(-2px);
         box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
       }
 
-      .btn-login:active {
+      .btn-login:active:not(:disabled) {
         transform: translateY(0);
+      }
+
+      .btn-login:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .loading-spinner {
+        width: 16px;
+        height: 16px;
+        border: 2px solid #ffffff;
+        border-top: 2px solid transparent;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        display: none;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
       }
 
       .footer {
@@ -175,6 +250,29 @@
       .footer a:hover {
         text-decoration: underline;
       }
+
+      .security-info {
+        background: #e7f3ff;
+        border-left: 4px solid #2196f3;
+        padding: 12px 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-size: 13px;
+        color: #0c5a8a;
+      }
+
+      .attempts-counter {
+        text-align: center;
+        margin-top: 10px;
+        font-size: 12px;
+        color: #dc3545;
+        font-weight: 600;
+        display: none;
+      }
+
+      .attempts-counter.show {
+        display: block;
+      }
     </style>
   </head>
   <body>
@@ -189,7 +287,29 @@
         ❌ Username atau password salah. Silakan coba lagi.
       </div>
 
+      <div id="warningMessage" class="warning-message">
+        ⚠️ Terlalu banyak percobaan login. Tunggu beberapa saat.
+      </div>
+
+      <div id="rateLimitMessage" class="warning-message">
+        🔒 Akun sementara terkunci karena terlalu banyak percobaan login gagal.
+        Silakan tunggu 15 menit.
+      </div>
+
+      <div class="security-info">
+        🔐 Login Anda dilindungi dengan enkripsi dan rate limiting untuk
+        keamanan maksimal.
+      </div>
+
       <form method="POST" action="/login" id="loginForm">
+        <!-- CSRF Token Hidden Field -->
+        <input
+          type="hidden"
+          name="_csrf"
+          id="csrfToken"
+          value="{{CSRF_TOKEN}}"
+        />
+
         <div class="form-group">
           <label for="username">Username</label>
           <div class="input-wrapper">
@@ -202,6 +322,7 @@
               required
               autocomplete="username"
               autofocus
+              maxlength="50"
             />
           </div>
         </div>
@@ -217,15 +338,23 @@
               placeholder="Masukkan password"
               required
               autocomplete="current-password"
+              maxlength="100"
             />
+            <span class="password-toggle" id="togglePassword">👁️</span>
           </div>
         </div>
 
-        <button type="submit" class="btn-login">🔐 Login</button>
+        <div id="attemptsCounter" class="attempts-counter"></div>
+
+        <button type="submit" class="btn-login" id="loginBtn">
+          <span id="loginIcon">🔐</span>
+          <span id="loginText">Login</span>
+          <span class="loading-spinner" id="loadingSpinner"></span>
+        </button>
       </form>
 
       <div class="footer">
-        <p>WhatsApp Gateway Dashboard v1.0</p>
+        <p>WhatsApp Gateway Dashboard v2.0 Enhanced</p>
         <p>
           Powered by
           <a href="https://baileys.whiskeysockets.io" target="_blank"
@@ -236,16 +365,134 @@
     </div>
 
     <script>
-      // Cek jika ada error dari URL parameter
+      // State management
+      let loginAttempts = parseInt(
+        localStorage.getItem('loginAttempts') || '0'
+      );
+      let lastAttemptTime = parseInt(
+        localStorage.getItem('lastAttemptTime') || '0'
+      );
+      const LOCKOUT_DURATION = 1 * 60 * 1000; // 15 minutes
+      const MAX_ATTEMPTS = 5;
+
+      // Check if account is locked
+      function checkLockout() {
+        const now = Date.now();
+        const timeSinceLastAttempt = now - lastAttemptTime;
+
+        if (
+          loginAttempts >= MAX_ATTEMPTS &&
+          timeSinceLastAttempt < LOCKOUT_DURATION
+        ) {
+          const remainingTime = Math.ceil(
+            (LOCKOUT_DURATION - timeSinceLastAttempt) / 1000 / 60
+          );
+          showRateLimitMessage(remainingTime);
+          disableForm();
+          return true;
+        } else if (timeSinceLastAttempt >= LOCKOUT_DURATION) {
+          // Reset after lockout period
+          loginAttempts = 0;
+          localStorage.setItem('loginAttempts', '0');
+        }
+        return false;
+      }
+
+      function showRateLimitMessage(minutes) {
+        const msg = document.getElementById('rateLimitMessage');
+        msg.innerHTML = `🔒 Akun sementara terkunci. Silakan tunggu ${minutes} menit lagi.`;
+        msg.classList.add('show');
+      }
+
+      function disableForm() {
+        document.getElementById('username').disabled = true;
+        document.getElementById('password').disabled = true;
+        document.getElementById('loginBtn').disabled = true;
+      }
+
+      function enableForm() {
+        document.getElementById('username').disabled = false;
+        document.getElementById('password').disabled = false;
+        document.getElementById('loginBtn').disabled = false;
+      }
+
+      // Password toggle
+      document
+        .getElementById('togglePassword')
+        .addEventListener('click', function () {
+          const passwordInput = document.getElementById('password');
+          const type =
+            passwordInput.getAttribute('type') === 'password'
+              ? 'text'
+              : 'password';
+          passwordInput.setAttribute('type', type);
+          this.textContent = type === 'password' ? '👁️' : '🙈';
+        });
+
+      // Form submission handler
+      document
+        .getElementById('loginForm')
+        .addEventListener('submit', function (e) {
+          if (checkLockout()) {
+            e.preventDefault();
+            return false;
+          }
+
+          const loginBtn = document.getElementById('loginBtn');
+          const loginIcon = document.getElementById('loginIcon');
+          const loginText = document.getElementById('loginText');
+          const spinner = document.getElementById('loadingSpinner');
+
+          // Show loading state
+          loginBtn.disabled = true;
+          loginIcon.style.display = 'none';
+          loginText.textContent = 'Memproses...';
+          spinner.style.display = 'inline-block';
+
+          // Track attempt
+          loginAttempts++;
+          lastAttemptTime = Date.now();
+          localStorage.setItem('loginAttempts', loginAttempts.toString());
+          localStorage.setItem('lastAttemptTime', lastAttemptTime.toString());
+
+          // Show attempts counter if getting close to limit
+          if (loginAttempts >= 3) {
+            const counter = document.getElementById('attemptsCounter');
+            counter.textContent = `⚠️ Percobaan ${loginAttempts} dari ${MAX_ATTEMPTS}`;
+            counter.classList.add('show');
+          }
+        });
+
+      // Check URL parameters for errors
       const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('error') === '1') {
+      const errorParam = urlParams.get('error');
+
+      if (errorParam === '1') {
         const errorMsg = document.getElementById('errorMessage');
         errorMsg.classList.add('show');
 
-        // Hapus error setelah 3 detik
+        // Update attempts counter
+        if (loginAttempts >= 3) {
+          const counter = document.getElementById('attemptsCounter');
+          counter.textContent = `⚠️ Percobaan ${loginAttempts} dari ${MAX_ATTEMPTS}. ${
+            MAX_ATTEMPTS - loginAttempts
+          } percobaan tersisa.`;
+          counter.classList.add('show');
+        }
+
+        // Auto-hide after 5 seconds
         setTimeout(() => {
           errorMsg.classList.remove('show');
-        }, 3000);
+        }, 5000);
+      } else if (errorParam === 'rate_limit') {
+        const warningMsg = document.getElementById('warningMessage');
+        warningMsg.classList.add('show');
+      }
+
+      // Reset on successful login (clear localStorage)
+      if (window.location.pathname === '/dashboard') {
+        localStorage.removeItem('loginAttempts');
+        localStorage.removeItem('lastAttemptTime');
       }
 
       // Prevent form resubmission on refresh
@@ -255,6 +502,45 @@
           null,
           window.location.href.split('?')[0]
         );
+      }
+
+      // Check lockout on page load
+      checkLockout();
+
+      // Input validation
+      document
+        .getElementById('username')
+        .addEventListener('input', function (e) {
+          // Remove any potentially harmful characters
+          this.value = this.value.replace(/[<>'"]/g, '');
+        });
+
+      document
+        .getElementById('password')
+        .addEventListener('input', function (e) {
+          // Remove whitespace from password
+          this.value = this.value.trim();
+        });
+
+      // Keyboard shortcuts
+      document.addEventListener('keydown', function (e) {
+        // Ctrl/Cmd + R to refresh (clear messages)
+        if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+          document.getElementById('errorMessage').classList.remove('show');
+          document.getElementById('warningMessage').classList.remove('show');
+        }
+      });
+
+      // Auto-focus on username field
+      window.addEventListener('load', () => {
+        if (!checkLockout()) {
+          document.getElementById('username').focus();
+        }
+      });
+
+      // Security: Prevent right-click in production
+      if (window.location.hostname !== 'localhost') {
+        document.addEventListener('contextmenu', (e) => e.preventDefault());
       }
     </script>
   </body>

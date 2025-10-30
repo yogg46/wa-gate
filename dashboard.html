@@ -1,552 +1,1239 @@
 <!DOCTYPE html>
 <html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dashboard - WhatsApp Gateway</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f5f7fa;
-            min-height: 100vh;
-        }
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: #f5f7fa;
+        min-height: 100vh;
+      }
 
-        .navbar {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 15px 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
+      .navbar {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 15px 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
 
-        .navbar h1 {
-            font-size: 22px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+      .navbar h1 {
+        font-size: 22px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
 
-        .navbar-right {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-        }
+      .navbar-right {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+      }
 
-        .btn {
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            padding: 8px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.3s;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
+      .btn {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        padding: 8px 16px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.3s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
 
-        .btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: translateY(-2px);
-        }
+      .btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+      }
 
-        .btn-danger {
-            background: rgba(220, 53, 69, 0.9);
-            border-color: rgba(220, 53, 69, 1);
-        }
+      .btn-danger {
+        background: rgba(220, 53, 69, 0.9);
+        border-color: rgba(220, 53, 69, 1);
+      }
 
-        .btn-danger:hover {
-            background: rgba(220, 53, 69, 1);
-        }
+      .btn-danger:hover {
+        background: rgba(220, 53, 69, 1);
+      }
 
-        .container {
-            max-width: 1200px;
-            margin: 30px auto;
-            padding: 0 20px;
-        }
+      .container {
+        max-width: 1400px;
+        margin: 30px auto;
+        padding: 0 20px;
+      }
 
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+      }
+
+      .stat-card {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        transition: transform 0.3s, box-shadow 0.3s;
+      }
+
+      .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.12);
+      }
+
+      .stat-icon {
+        font-size: 40px;
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #667eea20 0%, #764ba220 100%);
+      }
+
+      .stat-info {
+        flex: 1;
+      }
+
+      .stat-label {
+        font-size: 13px;
+        color: #666;
+        margin-bottom: 5px;
+      }
+
+      .stat-value {
+        font-size: 24px;
+        font-weight: 700;
+        color: #333;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+      }
+
+      .card {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        transition: transform 0.3s, box-shadow 0.3s;
+      }
+
+      .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.12);
+      }
+
+      .card-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #f0f0f0;
+      }
+
+      .card-icon {
+        font-size: 32px;
+      }
+
+      .card-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #333;
+      }
+
+      .status-badge {
+        display: inline-block;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 600;
+        margin-top: 10px;
+      }
+
+      .status-connected {
+        background: #d4edda;
+        color: #155724;
+        animation: pulse-green 2s infinite;
+      }
+
+      .status-disconnected {
+        background: #f8d7da;
+        color: #721c24;
+      }
+
+      .status-loading {
+        background: #fff3cd;
+        color: #856404;
+      }
+
+      @keyframes pulse-green {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.7;
+        }
+      }
+
+      #qr-img {
+        width: 100%;
+        max-width: 250px;
+        border: 3px solid #667eea;
+        border-radius: 10px;
+        margin-top: 15px;
+        display: none;
+        animation: fadeIn 0.5s;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: scale(0.9);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+
+      .qr-instructions {
+        background: #e7f3ff;
+        padding: 12px;
+        border-radius: 8px;
+        margin-top: 15px;
+        font-size: 13px;
+        color: #0c5a8a;
+        display: none;
+      }
+
+      .qr-instructions.show {
+        display: block;
+      }
+
+      .action-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+        flex-wrap: wrap;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        transition: all 0.3s;
+        flex: 1;
+        min-width: 140px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+      }
+
+      .btn-primary:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+      }
+
+      .btn-primary:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .log-container {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+      }
+
+      .log-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .log-controls {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+
+      #log {
+        background: #1e1e1e;
+        color: #d4d4d4;
+        padding: 20px;
+        border-radius: 10px;
+        height: 450px;
+        overflow-y: auto;
+        font-family: 'Courier New', monospace;
+        font-size: 13px;
+        line-height: 1.6;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+      }
+
+      #log::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      #log::-webkit-scrollbar-track {
+        background: #2d2d2d;
+        border-radius: 10px;
+      }
+
+      #log::-webkit-scrollbar-thumb {
+        background: #667eea;
+        border-radius: 10px;
+      }
+
+      .log-line {
+        margin-bottom: 4px;
+      }
+
+      .log-time {
+        color: #9cdcfe;
+      }
+
+      .log-success {
+        color: #4ec9b0;
+      }
+
+      .log-error {
+        color: #f48771;
+      }
+
+      .log-warning {
+        color: #dcdcaa;
+      }
+
+      .log-info {
+        color: #569cd6;
+      }
+
+      .log-debug {
+        color: #888;
+      }
+
+      .dropdown {
+        position: relative;
+        display: inline-block;
+      }
+
+      .dropdown-content {
+        display: none;
+        position: absolute;
+        right: 0;
+        background: white;
+        min-width: 250px;
+        max-height: 400px;
+        overflow-y: auto;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
+        z-index: 1;
+        margin-top: 5px;
+      }
+
+      .dropdown-content.show {
+        display: block;
+        animation: slideDown 0.3s;
+      }
+
+      @keyframes slideDown {
+        from {
+          opacity: 0;
+          transform: translateY(-10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .dropdown-item {
+        padding: 12px 16px;
+        cursor: pointer;
+        transition: background 0.2s;
+        border-bottom: 1px solid #f0f0f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .dropdown-item:last-child {
+        border-bottom: none;
+      }
+
+      .dropdown-item:hover {
+        background: #f5f7fa;
+      }
+
+      .loading {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid #f3f3f3;
+        border-top: 2px solid #667eea;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        vertical-align: middle;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .toast {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        background: white;
+        padding: 15px 20px;
+        border-radius: 10px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+        display: none;
+        align-items: center;
+        gap: 10px;
+        z-index: 1000;
+        animation: slideIn 0.3s;
+      }
+
+      @keyframes slideIn {
+        from {
+          transform: translateX(400px);
+        }
+        to {
+          transform: translateX(0);
+        }
+      }
+
+      .toast.show {
+        display: flex;
+      }
+
+      .toast.success {
+        border-left: 4px solid #28a745;
+      }
+
+      .toast.error {
+        border-left: 4px solid #dc3545;
+      }
+
+      .toast.warning {
+        border-left: 4px solid #ffc107;
+      }
+
+      .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+      }
+
+      .metric-item {
+        background: #f8f9fa;
+        padding: 12px;
+        border-radius: 8px;
+        font-size: 13px;
+      }
+
+      .metric-label {
+        color: #666;
+        margin-bottom: 5px;
+      }
+
+      .metric-value {
+        font-size: 16px;
+        font-weight: 600;
+        color: #333;
+      }
+
+      .connection-details {
+        margin-top: 15px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        font-size: 13px;
+      }
+
+      .connection-details p {
+        margin: 5px 0;
+        display: flex;
+        justify-content: space-between;
+      }
+
+      .connection-details strong {
+        color: #333;
+      }
+
+      .connection-details span {
+        color: #666;
+      }
+
+      @media (max-width: 768px) {
+        .stats-grid,
         .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .card {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.12);
-        }
-
-        .card-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .card-icon {
-            font-size: 32px;
-        }
-
-        .card-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: #333;
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 600;
-            margin-top: 10px;
-        }
-
-        .status-connected {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .status-disconnected {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
-        .status-loading {
-            background: #fff3cd;
-            color: #856404;
-        }
-
-        #qr-img {
-            width: 100%;
-            max-width: 250px;
-            border: 3px solid #667eea;
-            border-radius: 10px;
-            margin-top: 15px;
-            display: none;
+          grid-template-columns: 1fr;
         }
 
         .action-buttons {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
+          flex-direction: column;
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            transition: all 0.3s;
-            flex: 1;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
-        }
-
-        .btn-primary:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .log-container {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+          width: 100%;
         }
 
         .log-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
+          flex-direction: column;
+          align-items: flex-start;
         }
 
-        #log {
-            background: #1e1e1e;
-            color: #d4d4d4;
-            padding: 20px;
-            border-radius: 10px;
-            height: 400px;
-            overflow-y: auto;
-            font-family: 'Courier New', monospace;
-            font-size: 13px;
-            line-height: 1.6;
-            white-space: pre-wrap;
-            word-wrap: break-word;
+        .log-controls {
+          width: 100%;
+          justify-content: flex-end;
         }
-
-        #log::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        #log::-webkit-scrollbar-track {
-            background: #2d2d2d;
-            border-radius: 10px;
-        }
-
-        #log::-webkit-scrollbar-thumb {
-            background: #667eea;
-            border-radius: 10px;
-        }
-
-        .log-line {
-            margin-bottom: 4px;
-        }
-
-        .log-time {
-            color: #9cdcfe;
-        }
-
-        .log-success {
-            color: #4ec9b0;
-        }
-
-        .log-error {
-            color: #f48771;
-        }
-
-        .log-warning {
-            color: #dcdcaa;
-        }
-
-        .log-info {
-            color: #569cd6;
-        }
-
-        .dropdown {
-            position: relative;
-            display: inline-block;
-        }
-
-        .dropdown-content {
-            display: none;
-            position: absolute;
-            right: 0;
-            background: white;
-            min-width: 200px;
-            max-height: 300px;
-            overflow-y: auto;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-            border-radius: 8px;
-            z-index: 1;
-            margin-top: 5px;
-        }
-
-        .dropdown-content.show {
-            display: block;
-        }
-
-        .dropdown-item {
-            padding: 12px 16px;
-            cursor: pointer;
-            transition: background 0.2s;
-            border-bottom: 1px solid #f0f0f0;
-        }
-
-        .dropdown-item:last-child {
-            border-bottom: none;
-        }
-
-        .dropdown-item:hover {
-            background: #f5f7fa;
-        }
-
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            vertical-align: middle;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="navbar">
-        <h1>
-            <span>📱</span>
-            WhatsApp Gateway Dashboard
-        </h1>
-        <div class="navbar-right">
-            <a href="/broadcast" class="btn">📤 Broadcast</a>
-            <form method="POST" action="/logout" style="margin: 0">
-                <button type="submit" class="btn btn-danger">🚪 Logout</button>
-            </form>
-        </div>
+      <h1>
+        <span>📱</span>
+        WhatsApp Gateway Dashboard
+      </h1>
+      <div class="navbar-right">
+        <a href="/broadcast" class="btn">📤 Broadcast</a>
+        <form method="POST" action="/logout" style="margin: 0">
+          <button type="submit" class="btn btn-danger">🚪 Logout</button>
+        </form>
+      </div>
     </div>
 
     <div class="container">
-        <div class="grid">
-            <div class="card">
-                <div class="card-header">
-                    <span class="card-icon">🔌</span>
-                    <div>
-                        <div class="card-title">Status Koneksi</div>
-                    </div>
-                </div>
-                <div id="status" class="status-badge status-loading">
-                    <span class="loading"></span> Mengecek status...
-                </div>
-                <img id="qr-img" alt="QR Code">
-            </div>
+      <!-- Statistics Cards -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">📨</div>
+          <div class="stat-info">
+            <div class="stat-label">Total Pesan</div>
+            <div class="stat-value" id="totalMessages">-</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">✅</div>
+          <div class="stat-info">
+            <div class="stat-label">Pesan Terkirim</div>
+            <div class="stat-value" id="sentMessages">-</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">❌</div>
+          <div class="stat-info">
+            <div class="stat-label">Pesan Gagal</div>
+            <div class="stat-value" id="failedMessages">-</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">⏱️</div>
+          <div class="stat-info">
+            <div class="stat-label">Antrian</div>
+            <div class="stat-value" id="queueLength">-</div>
+          </div>
+        </div>
+      </div>
 
-            <div class="card">
-                <div class="card-header">
-                    <span class="card-icon">⚙️</span>
-                    <div>
-                        <div class="card-title">Kontrol Gateway</div>
-                    </div>
-                </div>
-                <div class="action-buttons">
-                    <button id="restart-btn" class="btn-primary">
-                        🔄 Restart Gateway
-                    </button>
-                    <button id="refresh-btn" class="btn-primary">
-                        ♻️ Refresh
-                    </button>
-                </div>
+      <div class="grid">
+        <!-- Connection Status Card -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-icon">🔌</span>
+            <div>
+              <div class="card-title">Status Koneksi WhatsApp</div>
             </div>
+          </div>
+          <div id="status" class="status-badge status-loading">
+            <span class="loading"></span> Mengecek status...
+          </div>
+          <img id="qr-img" alt="QR Code" />
+          <div id="qr-instructions" class="qr-instructions">
+            📱 <strong>Cara Scan QR Code:</strong><br />
+            1. Buka WhatsApp di ponsel Anda<br />
+            2. Ketuk Menu atau Settings<br />
+            3. Pilih "WhatsApp Web"<br />
+            4. Scan kode QR di atas
+          </div>
+
+          <div
+            class="connection-details"
+            id="connectionDetails"
+            style="display: none"
+          >
+            <p>
+              <strong>Last Connected:</strong> <span id="lastConnected">-</span>
+            </p>
+            <p>
+              <strong>Reconnect Attempts:</strong>
+              <span id="reconnectAttempts">-</span>
+            </p>
+            <p>
+              <strong>Total Messages Received:</strong>
+              <span id="totalReceived">-</span>
+            </p>
+            <p><strong>Error Count:</strong> <span id="errorCount">-</span></p>
+          </div>
         </div>
 
-        <div class="log-container">
-            <div class="log-header">
-                <div>
-                    <h2 style="font-size: 20px; color: #333">📋 Log Aktivitas</h2>
-                    <p style="font-size: 13px; color: #666; margin-top: 5px">
-                        Log hari ini - Auto refresh setiap 10 detik
-                    </p>
-                </div>
-                <div class="dropdown">
-                    <button class="btn" id="logMenuBtn">📁 Riwayat Log</button>
-                    <div class="dropdown-content" id="logDropdown"></div>
-                </div>
+        <!-- Control Panel Card -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-icon">⚙️</span>
+            <div>
+              <div class="card-title">Kontrol Gateway</div>
             </div>
-            <div id="log">Memuat log...</div>
+          </div>
+          <div class="action-buttons">
+            <button id="restart-btn" class="btn-primary">🔄 Restart</button>
+            <button id="refresh-btn" class="btn-primary">♻️ Refresh</button>
+          </div>
+          <div class="action-buttons">
+            <button id="health-btn" class="btn-primary">🏥 Health Check</button>
+            <button id="metrics-btn" class="btn-primary">📊 Metrics</button>
+          </div>
         </div>
+
+        <!-- System Info Card -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-icon">💻</span>
+            <div>
+              <div class="card-title">Informasi Sistem</div>
+            </div>
+          </div>
+          <div class="metrics-grid" id="systemMetrics">
+            <div class="metric-item">
+              <div class="metric-label">Uptime</div>
+              <div class="metric-value" id="uptime">-</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-label">Memory Usage</div>
+              <div class="metric-value" id="memoryUsage">-</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-label">Node Version</div>
+              <div class="metric-value" id="nodeVersion">-</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-label">CPU Cores</div>
+              <div class="metric-value" id="cpuCores">-</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Log Container -->
+      <div class="log-container">
+        <div class="log-header">
+          <div>
+            <h2 style="font-size: 20px; color: #333">
+              📋 Log Aktivitas Real-time
+            </h2>
+            <p style="font-size: 13px; color: #666; margin-top: 5px">
+              Auto refresh setiap 10 detik | Last update:
+              <span id="lastUpdate">-</span>
+            </p>
+          </div>
+          <div class="log-controls">
+            <button class="btn" id="clearLogBtn">🗑️ Clear</button>
+            <button class="btn" id="downloadCurrentBtn">💾 Download</button>
+            <div class="dropdown">
+              <button class="btn" id="logMenuBtn">📁 Riwayat</button>
+              <div class="dropdown-content" id="logDropdown"></div>
+            </div>
+          </div>
+        </div>
+        <div id="log">Memuat log...</div>
+      </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+      <span id="toastIcon"></span>
+      <span id="toastMessage"></span>
     </div>
 
     <script>
-        let API_KEY = '{{LARAVEL_API_KEY}}';
-        let autoRefreshInterval;
+      let API_KEY = '{{LARAVEL_API_KEY}}';
+      let autoRefreshInterval;
+      let metricsInterval;
 
-        // Validasi API Key dari server-side rendering
-        function validateApiKey() {
-            if (!API_KEY || API_KEY === '{{LARAVEL_API_KEY}}' || API_KEY === 'undefined' || API_KEY.length < 10) {
-                console.error('❌ API Key tidak valid dari server');
-                return false;
+      // Toast notification function
+      function showToast(message, type = 'success') {
+        const toast = document.getElementById('toast');
+        const icon = document.getElementById('toastIcon');
+        const msg = document.getElementById('toastMessage');
+
+        const icons = {
+          success: '✅',
+          error: '❌',
+          warning: '⚠️',
+          info: 'ℹ️',
+        };
+
+        icon.textContent = icons[type] || icons.info;
+        msg.textContent = message;
+        toast.className = `toast ${type} show`;
+
+        setTimeout(() => {
+          toast.classList.remove('show');
+        }, 4000);
+      }
+
+      // Validate API Key
+      function validateApiKey() {
+        if (
+          !API_KEY ||
+          API_KEY === '{{LARAVEL_API_KEY}}' ||
+          API_KEY === 'undefined' ||
+          API_KEY.length < 10
+        ) {
+          console.error('❌ API Key tidak valid');
+          showToast(
+            'API Key tidak valid. Silakan logout dan login kembali.',
+            'error'
+          );
+          return false;
+        }
+        console.log('✅ API Key valid');
+        return true;
+      }
+
+      // Fetch QR Code
+      async function fetchQR() {
+        const imgEl = document.getElementById('qr-img');
+        const statusEl = document.getElementById('status');
+        const instructions = document.getElementById('qr-instructions');
+
+        try {
+          const res = await fetch('/qr', {
+            headers: { Authorization: 'Bearer ' + API_KEY },
+          });
+          const data = await res.json();
+
+          if (data.status && data.qr) {
+            imgEl.src = data.qr;
+            imgEl.style.display = 'block';
+            instructions.classList.add('show');
+            statusEl.className = 'status-badge status-loading';
+            statusEl.innerHTML = '📸 QR Code tersedia - Silakan scan';
+          } else {
+            imgEl.style.display = 'none';
+            instructions.classList.remove('show');
+            statusEl.className = 'status-badge status-connected';
+            statusEl.innerHTML = '✅ WhatsApp Terhubung';
+            document.getElementById('connectionDetails').style.display =
+              'block';
+          }
+        } catch (err) {
+          statusEl.className = 'status-badge status-disconnected';
+          statusEl.innerHTML = '❌ Tidak terhubung';
+          imgEl.style.display = 'none';
+          instructions.classList.remove('show');
+          console.error('Error fetching QR:', err);
+        }
+      }
+
+      // Format log with colors
+      function formatLog(logText) {
+        const lines = logText.split('\n');
+        return lines
+          .map((line) => {
+            let className = '';
+
+            if (line.includes('[ERROR]')) className = 'log-error';
+            else if (line.includes('[WARN]')) className = 'log-warning';
+            else if (line.includes('[SUCCESS]')) className = 'log-success';
+            else if (
+              line.includes('[INFO]') ||
+              line.includes('[MESSAGE]') ||
+              line.includes('[NETWORK]')
+            )
+              className = 'log-info';
+            else if (line.includes('[DEBUG]')) className = 'log-debug';
+            else if (line.includes('✅')) className = 'log-success';
+            else if (line.includes('❌')) className = 'log-error';
+            else if (line.includes('⚠️')) className = 'log-warning';
+
+            const timeMatch = line.match(/\[(.*?)\]/);
+            if (timeMatch) {
+              const time = timeMatch[1];
+              const message = line.substring(timeMatch[0].length).trim();
+              return `<div class="log-line"><span class="log-time">[${time}]</span> <span class="${className}">${message}</span></div>`;
             }
-            console.log('✅ API Key valid:', API_KEY.substring(0, 15) + '...');
-            return true;
+            return `<div class="log-line ${className}">${line}</div>`;
+          })
+          .join('');
+      }
+
+      // Fetch logs
+      async function fetchLog() {
+        const logEl = document.getElementById('log');
+        try {
+          const res = await fetch('/logs', {
+            headers: { Authorization: 'Bearer ' + API_KEY },
+          });
+          const data = await res.json();
+
+          if (data.status && data.log) {
+            const lines = data.log.trim().split('\n').reverse();
+            logEl.innerHTML = formatLog(lines.join('\n'));
+            document.getElementById('lastUpdate').textContent =
+              new Date().toLocaleTimeString('id-ID');
+          } else {
+            logEl.innerHTML =
+              '<div class="log-line log-warning">📝 Belum ada log hari ini</div>';
+          }
+
+          // Auto scroll to bottom
+          logEl.scrollTop = 0;
+        } catch (err) {
+          logEl.innerHTML = `<div class="log-line log-error">❌ Gagal memuat log: ${err.message}</div>`;
+          console.error('Error fetching log:', err);
         }
+      }
 
-        async function fetchQR() {
-            const imgEl = document.getElementById('qr-img');
-            const statusEl = document.getElementById('status');
-            try {
-                const res = await fetch('/qr', {
-                    headers: { Authorization: 'Bearer ' + API_KEY }
-                });
-                const data = await res.json();
-                if (data.status && data.qr) {
-                    imgEl.src = data.qr;
-                    imgEl.style.display = 'block';
-                    statusEl.className = 'status-badge status-loading';
-                    statusEl.innerHTML = '📸 QR tersedia, silakan scan di WhatsApp';
-                } else {
-                    imgEl.style.display = 'none';
-                    statusEl.className = 'status-badge status-connected';
-                    statusEl.innerHTML = '✅ WhatsApp terhubung';
-                }
-            } catch (err) {
-                statusEl.className = 'status-badge status-disconnected';
-                statusEl.innerHTML = '❌ Gagal mengambil status';
-                imgEl.style.display = 'none';
-            }
+      // Fetch metrics
+      async function fetchMetrics() {
+        try {
+          const res = await fetch('/metrics', {
+            headers: { Authorization: 'Bearer ' + API_KEY },
+          });
+          const data = await res.json();
+
+          // Update stats
+          document.getElementById('totalMessages').textContent =
+            data.connection.totalMessages || 0;
+          document.getElementById('sentMessages').textContent =
+            data.messageQueue.sent || 0;
+          document.getElementById('failedMessages').textContent =
+            data.messageQueue.failed || 0;
+          document.getElementById('queueLength').textContent =
+            data.messageQueue.queueLength || 0;
+
+          // Update connection details
+          if (data.connection.lastConnected) {
+            document.getElementById('lastConnected').textContent = new Date(
+              data.connection.lastConnected
+            ).toLocaleString('id-ID');
+          }
+          document.getElementById('reconnectAttempts').textContent =
+            data.connection.reconnectAttempts || 0;
+          document.getElementById('totalReceived').textContent =
+            data.connection.totalMessages || 0;
+          document.getElementById('errorCount').textContent =
+            data.connection.errors || 0;
+        } catch (err) {
+          console.error('Error fetching metrics:', err);
         }
+      }
 
-        function formatLog(logText) {
-            const lines = logText.split('\n');
-            return lines.map(line => {
-                let className = '';
-                if (line.includes('✅') || line.includes('berhasil')) className = 'log-success';
-                else if (line.includes('❌') || line.includes('Gagal')) className = 'log-error';
-                else if (line.includes('⚠️') || line.includes('warning')) className = 'log-warning';
-                else if (line.includes('📸') || line.includes('📩') || line.includes('📨')) className = 'log-info';
+      // Fetch health check
+      async function fetchHealth() {
+        try {
+          const res = await fetch('/health');
+          const data = await res.json();
 
-                const timeMatch = line.match(/\[(.*?)\]/);
-                if (timeMatch) {
-                    const time = timeMatch[1];
-                    const message = line.substring(timeMatch[0].length).trim();
-                    return `<div class="log-line"><span class="log-time">[${time}]</span> <span class="${className}">${message}</span></div>`;
-                }
-                return `<div class="log-line ${className}">${line}</div>`;
-            }).join('');
+          // Update system info
+          document.getElementById('uptime').textContent =
+            data.uptime.formatted || '-';
+          document.getElementById('memoryUsage').textContent =
+            data.memory.heapUsed || '-';
+          document.getElementById('nodeVersion').textContent =
+            data.system.nodeVersion || '-';
+          document.getElementById('cpuCores').textContent =
+            data.system.cpuCount || '-';
+
+          showToast('Health check berhasil', 'success');
+        } catch (err) {
+          showToast('Gagal melakukan health check', 'error');
+          console.error('Error fetching health:', err);
         }
+      }
 
-        async function fetchLog() {
-            const logEl = document.getElementById('log');
-            try {
-                const res = await fetch('/logs', {
-                    headers: { Authorization: 'Bearer ' + API_KEY }
-                });
-                const data = await res.json();
-                if (data.log) {
-                    const lines = data.log.trim().split('\n').reverse();
-                    logEl.innerHTML = formatLog(lines.join('\n'));
-                } else {
-                    logEl.innerHTML = '<div class="log-line log-warning">📝 Belum ada log hari ini</div>';
-                }
-            } catch (err) {
-                logEl.innerHTML = `<div class="log-line log-error">❌ Gagal memuat log: ${err.message}</div>`;
-            }
-        }
+      // Load log history
+      async function loadLogHistory() {
+        try {
+          const res = await fetch('/logs/list', {
+            headers: { Authorization: 'Bearer ' + API_KEY },
+          });
+          const data = await res.json();
+          const dropdown = document.getElementById('logDropdown');
 
-        async function loadLogHistory() {
-            try {
-                const res = await fetch('/logs/list', {
-                    headers: { Authorization: 'Bearer ' + API_KEY }
-                });
-                const data = await res.json();
-                const dropdown = document.getElementById('logDropdown');
-
-                if (data.status && data.logs.length > 0) {
-                    dropdown.innerHTML = data.logs.map(log =>
-                        `<div class="dropdown-item" onclick="downloadLog('${log.date}')">
-                            📄 ${log.date} (${(log.size / 1024).toFixed(2)} KB)
+          if (data.status && data.logs.length > 0) {
+            dropdown.innerHTML = data.logs
+              .map(
+                (log) =>
+                  `<div class="dropdown-item" onclick="downloadLog('${
+                    log.date
+                  }')">
+                            <span>📄 ${log.date}</span>
+                            <span style="font-size: 11px; color: #999;">${
+                              log.sizeFormatted ||
+                              (log.size / 1024).toFixed(2) + ' KB'
+                            }</span>
                         </div>`
-                    ).join('');
-                } else {
-                    dropdown.innerHTML = '<div class="dropdown-item">Tidak ada riwayat log</div>';
-                }
-            } catch (err) {
-                console.error('Gagal load log history:', err);
-            }
+              )
+              .join('');
+          } else {
+            dropdown.innerHTML =
+              '<div class="dropdown-item">Tidak ada riwayat log</div>';
+          }
+        } catch (err) {
+          console.error('Gagal load log history:', err);
         }
+      }
 
-        function downloadLog(date) {
-            fetch(`/logs/download/${date}`, {
-                headers: { Authorization: 'Bearer ' + API_KEY }
-            })
-            .then(response => {
-                if (!response.ok) throw new Error('Gagal download log');
-                return response.blob();
-            })
-            .then(blob => {
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `gateway-${date}.log`;
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-                document.body.removeChild(a);
-            })
-            .catch(err => {
-                alert('Gagal download log: ' + err.message);
-            });
+      // Download log
+      function downloadLog(date) {
+        fetch(`/logs/download/${date}`, {
+          headers: { Authorization: 'Bearer ' + API_KEY },
+        })
+          .then((response) => {
+            if (!response.ok) throw new Error('Gagal download log');
+            return response.blob();
+          })
+          .then((blob) => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `gateway-${date}.log`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            showToast(`Log ${date} berhasil didownload`, 'success');
+          })
+          .catch((err) => {
+            showToast('Gagal download log: ' + err.message, 'error');
+          });
 
-            document.getElementById('logDropdown').classList.remove('show');
+        document.getElementById('logDropdown').classList.remove('show');
+      }
+
+      // Download current log
+      function downloadCurrentLog() {
+        const logContent = document.getElementById('log').innerText;
+        const blob = new Blob([logContent], { type: 'text/plain' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const today = new Date().toISOString().split('T')[0];
+        a.href = url;
+        a.download = `gateway-log-${today}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        showToast('Log berhasil didownload', 'success');
+      }
+
+      // Clear log display
+      function clearLogDisplay() {
+        if (confirm('Clear tampilan log? (Log tetap tersimpan di server)')) {
+          document.getElementById('log').innerHTML =
+            '<div class="log-line log-info">ℹ️ Tampilan log dibersihkan. Refresh untuk memuat ulang.</div>';
+          showToast('Tampilan log dibersihkan', 'info');
         }
+      }
 
-        async function restartGateway() {
-            if (!confirm('Yakin ingin restart gateway?')) return;
-            const btn = document.getElementById('restart-btn');
-            btn.disabled = true;
-            btn.innerHTML = '<span class="loading"></span> Restarting...';
+      // Restart gateway
+      async function restartGateway() {
+        if (
+          !confirm(
+            '⚠️ Yakin ingin restart gateway? Koneksi WhatsApp akan terputus sementara.'
+          )
+        )
+          return;
 
-            try {
-                const res = await fetch('/restart', {
-                    method: 'POST',
-                    headers: { Authorization: 'Bearer ' + API_KEY }
-                });
-                const data = await res.json();
-                alert(data.message);
-            } catch (err) {
-                alert('Gagal restart: ' + err.message);
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '🔄 Restart Gateway';
-            }
-        }
+        const btn = document.getElementById('restart-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loading"></span> Restarting...';
 
-        function refreshAll() {
-            fetchQR();
-            fetchLog();
-        }
+        try {
+          const res = await fetch('/restart', {
+            method: 'POST',
+            headers: { Authorization: 'Bearer ' + API_KEY },
+          });
+          const data = await res.json();
 
-        // Event listeners
-        document.getElementById('restart-btn').addEventListener('click', restartGateway);
-        document.getElementById('refresh-btn').addEventListener('click', refreshAll);
+          if (data.status) {
+            showToast(
+              'Gateway sedang direstart. Tunggu 10 detik...',
+              'success'
+            );
 
-        document.getElementById('logMenuBtn').addEventListener('click', (e) => {
-            e.stopPropagation();
-            const dropdown = document.getElementById('logDropdown');
-            dropdown.classList.toggle('show');
-            if (dropdown.classList.contains('show')) {
-                loadLogHistory();
-            }
-        });
-
-        // Close dropdown when clicking outside
-        window.addEventListener('click', () => {
-            document.getElementById('logDropdown').classList.remove('show');
-        });
-
-        // Initialize - Load initial data
-        (function init() {
-            // Validasi API Key dari server
-            if (!validateApiKey()) {
-                document.getElementById('status').innerHTML = '❌ Gagal memuat konfigurasi';
-                document.getElementById('status').className = 'status-badge status-disconnected';
-                document.getElementById('log').innerHTML = '<div class="log-line log-error">❌ Gagal memuat API Key. Silakan logout dan login kembali.</div>';
-                return;
-            }
-
-            // Load initial data
-            fetchQR();
-            fetchLog();
-
-            // Auto refresh every 10 seconds
-            autoRefreshInterval = setInterval(() => {
-                fetchQR();
-                fetchLog();
+            // Wait and refresh page
+            setTimeout(() => {
+              window.location.reload();
             }, 10000);
-        })();
+          } else {
+            showToast('Gagal restart: ' + data.message, 'error');
+            btn.disabled = false;
+            btn.innerHTML = '🔄 Restart';
+          }
+        } catch (err) {
+          showToast('Gagal restart: ' + err.message, 'error');
+          btn.disabled = false;
+          btn.innerHTML = '🔄 Restart';
+        }
+      }
+
+      // Refresh all data
+      function refreshAll() {
+        showToast('Memuat ulang data...', 'info');
+        fetchQR();
+        fetchLog();
+        fetchMetrics();
+        fetchHealth();
+      }
+
+      // Event listeners
+      document
+        .getElementById('restart-btn')
+        .addEventListener('click', restartGateway);
+      document
+        .getElementById('refresh-btn')
+        .addEventListener('click', refreshAll);
+      document
+        .getElementById('health-btn')
+        .addEventListener('click', fetchHealth);
+      document.getElementById('metrics-btn').addEventListener('click', () => {
+        fetchMetrics();
+        showToast('Metrics updated', 'success');
+      });
+      document
+        .getElementById('clearLogBtn')
+        .addEventListener('click', clearLogDisplay);
+      document
+        .getElementById('downloadCurrentBtn')
+        .addEventListener('click', downloadCurrentLog);
+
+      document.getElementById('logMenuBtn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        const dropdown = document.getElementById('logDropdown');
+        dropdown.classList.toggle('show');
+        if (dropdown.classList.contains('show')) {
+          loadLogHistory();
+        }
+      });
+
+      // Close dropdown when clicking outside
+      window.addEventListener('click', () => {
+        document.getElementById('logDropdown').classList.remove('show');
+      });
+
+      // Keyboard shortcuts
+      document.addEventListener('keydown', (e) => {
+        // Ctrl/Cmd + R - Refresh
+        if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+          e.preventDefault();
+          refreshAll();
+        }
+        // Ctrl/Cmd + L - Clear log display
+        if ((e.ctrlKey || e.metaKey) && e.key === 'l') {
+          e.preventDefault();
+          clearLogDisplay();
+        }
+        // Ctrl/Cmd + D - Download current log
+        if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+          e.preventDefault();
+          downloadCurrentLog();
+        }
+      });
+
+      // Initialize dashboard
+      (function init() {
+        console.log('🚀 Dashboard Initialization...');
+
+        // Validate API Key
+        if (!validateApiKey()) {
+          document.getElementById('status').innerHTML = '❌ Konfigurasi Error';
+          document.getElementById('status').className =
+            'status-badge status-disconnected';
+          document.getElementById('log').innerHTML =
+            '<div class="log-line log-error">❌ API Key tidak valid. Silakan logout dan login kembali.</div>';
+
+          // Disable all buttons
+          document.getElementById('restart-btn').disabled = true;
+          document.getElementById('refresh-btn').disabled = true;
+          document.getElementById('health-btn').disabled = true;
+          document.getElementById('metrics-btn').disabled = true;
+          return;
+        }
+
+        // Load initial data
+        console.log('📊 Loading initial data...');
+        fetchQR();
+        fetchLog();
+        fetchMetrics();
+        fetchHealth();
+
+        // Auto refresh QR and Log every 10 seconds
+        autoRefreshInterval = setInterval(() => {
+          fetchQR();
+          fetchLog();
+        }, 10000);
+
+        // Update metrics every 5 seconds
+        metricsInterval = setInterval(() => {
+          fetchMetrics();
+        }, 5000);
+
+        console.log('✅ Dashboard initialized successfully');
+        showToast('Dashboard berhasil dimuat', 'success');
+      })();
+
+      // Cleanup on page unload
+      window.addEventListener('beforeunload', () => {
+        if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+        if (metricsInterval) clearInterval(metricsInterval);
+      });
+
+      // Visibility change handling (pause refresh when tab not visible)
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+          console.log('⏸️ Tab hidden - Pausing auto refresh');
+          if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+          if (metricsInterval) clearInterval(metricsInterval);
+        } else {
+          console.log('▶️ Tab visible - Resuming auto refresh');
+          // Resume auto refresh
+          fetchQR();
+          fetchLog();
+          fetchMetrics();
+
+          autoRefreshInterval = setInterval(() => {
+            fetchQR();
+            fetchLog();
+          }, 10000);
+
+          metricsInterval = setInterval(() => {
+            fetchMetrics();
+          }, 5000);
+        }
+      });
+
+      // Connection status check
+      let connectionCheckInterval = setInterval(async () => {
+        try {
+          const res = await fetch('/health');
+          if (!res.ok) {
+            showToast('Koneksi ke server terputus', 'error');
+          }
+        } catch (err) {
+          showToast('Tidak dapat terhubung ke server', 'error');
+          console.error('Connection check failed:', err);
+        }
+      }, 30000); // Check every 30 seconds
+
+      // Cleanup connection check
+      window.addEventListener('beforeunload', () => {
+        if (connectionCheckInterval) clearInterval(connectionCheckInterval);
+      });
+
+      // Easter egg - Konami code
+      let konamiCode = [];
+      const konamiPattern = [
+        'ArrowUp',
+        'ArrowUp',
+        'ArrowDown',
+        'ArrowDown',
+        'ArrowLeft',
+        'ArrowRight',
+        'ArrowLeft',
+        'ArrowRight',
+        'b',
+        'a',
+      ];
+
+      document.addEventListener('keydown', (e) => {
+        konamiCode.push(e.key);
+        konamiCode = konamiCode.slice(-10);
+
+        if (konamiCode.join(',') === konamiPattern.join(',')) {
+          showToast(
+            '🎮 Konami Code Activated! Made with ❤️ by Developer',
+            'success'
+          );
+          document.body.style.animation = 'rainbow 5s linear infinite';
+        }
+      });
+
+      // Service Worker registration for PWA (optional)
+      if (
+        'serviceWorker' in navigator &&
+        window.location.protocol === 'https:'
+      ) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker
+            .register('/sw.js')
+            .then((reg) => console.log('✅ Service Worker registered'))
+            .catch((err) =>
+              console.log('❌ Service Worker registration failed:', err)
+            );
+        });
+      }
     </script>
-</body>
+
+    <style>
+      @keyframes rainbow {
+        0% {
+          filter: hue-rotate(0deg);
+        }
+        100% {
+          filter: hue-rotate(360deg);
+        }
+      }
+    </style>
+  </body>
 </html>
