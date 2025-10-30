@@ -273,6 +273,13 @@
         transform: none;
       }
 
+      .logs-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+        gap: 20px;
+        margin-top: 30px;
+      }
+
       .log-container {
         background: white;
         border-radius: 15px;
@@ -289,36 +296,47 @@
         gap: 10px;
       }
 
+      .log-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .log-title h2 {
+        font-size: 18px;
+        color: #333;
+      }
+
       .log-controls {
         display: flex;
         gap: 10px;
         align-items: center;
       }
 
-      #log {
+      .log-box {
         background: #1e1e1e;
         color: #d4d4d4;
-        padding: 20px;
+        padding: 15px;
         border-radius: 10px;
-        height: 450px;
+        height: 400px;
         overflow-y: auto;
         font-family: 'Courier New', monospace;
-        font-size: 13px;
-        line-height: 1.6;
+        font-size: 12px;
+        line-height: 1.5;
         white-space: pre-wrap;
         word-wrap: break-word;
       }
 
-      #log::-webkit-scrollbar {
+      .log-box::-webkit-scrollbar {
         width: 8px;
       }
 
-      #log::-webkit-scrollbar-track {
+      .log-box::-webkit-scrollbar-track {
         background: #2d2d2d;
         border-radius: 10px;
       }
 
-      #log::-webkit-scrollbar-thumb {
+      .log-box::-webkit-scrollbar-thumb {
         background: #667eea;
         border-radius: 10px;
       }
@@ -332,96 +350,35 @@
       }
 
       .log-success {
-        color: #4ec9b0;
+        color: #00b894;
       }
 
       .log-error {
-        color: #f48771;
+        color: #ff7675;
       }
 
       .log-warning {
-        color: #dcdcaa;
+        color: #fdcb6e;
       }
 
       .log-info {
-        color: #569cd6;
+        color: #81ecec;
       }
 
       .log-debug {
-        color: #888;
+        color: #636e72;
       }
 
-      .dropdown {
-        position: relative;
-        display: inline-block;
+      .log-network {
+        color: #74b9ff;
       }
 
-      .dropdown-content {
-        display: none;
-        position: absolute;
-        right: 0;
-        background: white;
-        min-width: 250px;
-        max-height: 400px;
-        overflow-y: auto;
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-        border-radius: 8px;
-        z-index: 1;
-        margin-top: 5px;
+      .log-security {
+        color: #ff6b6b;
       }
 
-      .dropdown-content.show {
-        display: block;
-        animation: slideDown 0.3s;
-      }
-
-      @keyframes slideDown {
-        from {
-          opacity: 0;
-          transform: translateY(-10px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-
-      .dropdown-item {
-        padding: 12px 16px;
-        cursor: pointer;
-        transition: background 0.2s;
-        border-bottom: 1px solid #f0f0f0;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-
-      .dropdown-item:last-child {
-        border-bottom: none;
-      }
-
-      .dropdown-item:hover {
-        background: #f5f7fa;
-      }
-
-      .loading {
-        display: inline-block;
-        width: 16px;
-        height: 16px;
-        border: 2px solid #f3f3f3;
-        border-top: 2px solid #667eea;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-        vertical-align: middle;
-      }
-
-      @keyframes spin {
-        0% {
-          transform: rotate(0deg);
-        }
-        100% {
-          transform: rotate(360deg);
-        }
+      .log-queue {
+        color: #a29bfe;
       }
 
       .toast {
@@ -509,6 +466,37 @@
 
       .connection-details span {
         color: #666;
+      }
+
+      .loading {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid #f3f3f3;
+        border-top: 2px solid #667eea;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        vertical-align: middle;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .btn-small {
+        padding: 6px 12px;
+        font-size: 12px;
+      }
+
+      @media (max-width: 1200px) {
+        .logs-grid {
+          grid-template-columns: 1fr;
+        }
       }
 
       @media (max-width: 768px) {
@@ -672,28 +660,47 @@
         </div>
       </div>
 
-      <!-- Log Container -->
-      <div class="log-container">
-        <div class="log-header">
-          <div>
-            <h2 style="font-size: 20px; color: #333">
-              📋 Log Aktivitas Real-time
-            </h2>
-            <p style="font-size: 13px; color: #666; margin-top: 5px">
-              Auto refresh setiap 10 detik | Last update:
-              <span id="lastUpdate">-</span>
-            </p>
-          </div>
-          <div class="log-controls">
-            <button class="btn" id="clearLogBtn">🗑️ Clear</button>
-            <button class="btn" id="downloadCurrentBtn">💾 Download</button>
-            <div class="dropdown">
-              <button class="btn" id="logMenuBtn">📁 Riwayat</button>
-              <div class="dropdown-content" id="logDropdown"></div>
+      <!-- Dual Log Containers -->
+      <div class="logs-grid">
+        <!-- Activity Log -->
+        <div class="log-container">
+          <div class="log-header">
+            <div class="log-title">
+              <span style="font-size: 24px">📋</span>
+              <div>
+                <h2>Log Aktivitas</h2>
+                <p style="font-size: 12px; color: #666; margin-top: 3px">
+                  Auto refresh • Last: <span id="activityLastUpdate">-</span>
+                </p>
+              </div>
+            </div>
+            <div class="log-controls">
+              <button class="btn btn-small" id="clearActivityBtn">🗑️</button>
+              <button class="btn btn-small" id="downloadActivityBtn">💾</button>
             </div>
           </div>
+          <div id="activityLog" class="log-box">Memuat log aktivitas...</div>
         </div>
-        <div id="log">Memuat log...</div>
+
+        <!-- Network Log -->
+        <div class="log-container">
+          <div class="log-header">
+            <div class="log-title">
+              <span style="font-size: 24px">🌐</span>
+              <div>
+                <h2>Log Network</h2>
+                <p style="font-size: 12px; color: #666; margin-top: 3px">
+                  Auto refresh • Last: <span id="networkLastUpdate">-</span>
+                </p>
+              </div>
+            </div>
+            <div class="log-controls">
+              <button class="btn btn-small" id="clearNetworkBtn">🗑️</button>
+              <button class="btn btn-small" id="downloadNetworkBtn">💾</button>
+            </div>
+          </div>
+          <div id="networkLog" class="log-box">Memuat log network...</div>
+        </div>
       </div>
     </div>
 
@@ -784,63 +791,115 @@
         }
       }
 
-      // Format log with colors
-      function formatLog(logText) {
-        const lines = logText.split('\n');
-        return lines
-          .map((line) => {
-            let className = '';
-
-            if (line.includes('[ERROR]')) className = 'log-error';
-            else if (line.includes('[WARN]')) className = 'log-warning';
-            else if (line.includes('[SUCCESS]')) className = 'log-success';
-            else if (
-              line.includes('[INFO]') ||
-              line.includes('[MESSAGE]') ||
-              line.includes('[NETWORK]')
-            )
-              className = 'log-info';
-            else if (line.includes('[DEBUG]')) className = 'log-debug';
-            else if (line.includes('✅')) className = 'log-success';
-            else if (line.includes('❌')) className = 'log-error';
-            else if (line.includes('⚠️')) className = 'log-warning';
-
-            const timeMatch = line.match(/\[(.*?)\]/);
-            if (timeMatch) {
-              const time = timeMatch[1];
-              const message = line.substring(timeMatch[0].length).trim();
-              return `<div class="log-line"><span class="log-time">[${time}]</span> <span class="${className}">${message}</span></div>`;
-            }
-            return `<div class="log-line ${className}">${line}</div>`;
-          })
-          .join('');
-      }
-
-      // Fetch logs
-      async function fetchLog() {
-        const logEl = document.getElementById('log');
+      // Fetch Activity Log Only
+      async function fetchActivityLog() {
         try {
-          const res = await fetch('/logs', {
+          const res = await fetch('/logs/activity?lines=200', {
             headers: { Authorization: 'Bearer ' + API_KEY },
           });
           const data = await res.json();
 
+          const activityLog = document.getElementById('activityLog');
+
           if (data.status && data.log) {
-            const lines = data.log.trim().split('\n').reverse();
-            logEl.innerHTML = formatLog(lines.join('\n'));
-            document.getElementById('lastUpdate').textContent =
-              new Date().toLocaleTimeString('id-ID');
+            const lines = data.log.trim().split('\n');
+            const reversed = lines.reverse(); // Show latest first
+            activityLog.innerHTML = formatLog(reversed.join('\n'));
           } else {
-            logEl.innerHTML =
-              '<div class="log-line log-warning">📝 Belum ada log hari ini</div>';
+            activityLog.innerHTML =
+              '<div class="log-line log-warning">📝 Belum ada log aktivitas hari ini</div>';
           }
 
-          // Auto scroll to bottom
-          logEl.scrollTop = 0;
+          // Update last update time
+          const now = new Date().toLocaleTimeString('id-ID');
+          document.getElementById('activityLastUpdate').textContent = now;
+
+          // Auto scroll to top (showing latest)
+          activityLog.scrollTop = 0;
+
+          return true;
         } catch (err) {
-          logEl.innerHTML = `<div class="log-line log-error">❌ Gagal memuat log: ${err.message}</div>`;
-          console.error('Error fetching log:', err);
+          console.error('Error fetching activity log:', err);
+          document.getElementById('activityLog').innerHTML =
+            '<div class="log-line log-error">❌ Gagal memuat log aktivitas</div>';
+          return false;
         }
+      }
+
+      // Fetch Network Log Only
+      async function fetchNetworkLog() {
+        try {
+          const res = await fetch('/logs/network?lines=200', {
+            headers: { Authorization: 'Bearer ' + API_KEY },
+          });
+          const data = await res.json();
+
+          const networkLog = document.getElementById('networkLog');
+
+          if (data.status && data.log) {
+            const lines = data.log.trim().split('\n');
+            const reversed = lines.reverse(); // Show latest first
+            networkLog.innerHTML = formatLog(reversed.join('\n'), true);
+          } else {
+            networkLog.innerHTML =
+              '<div class="log-line log-warning">🌐 Belum ada log network hari ini</div>';
+          }
+
+          // Update last update time
+          const now = new Date().toLocaleTimeString('id-ID');
+          document.getElementById('networkLastUpdate').textContent = now;
+
+          // Auto scroll to top (showing latest)
+          networkLog.scrollTop = 0;
+
+          return true;
+        } catch (err) {
+          console.error('Error fetching network log:', err);
+          document.getElementById('networkLog').innerHTML =
+            '<div class="log-line log-error">❌ Gagal memuat log network</div>';
+          return false;
+        }
+      }
+
+      // Enhanced log formatting
+      function formatLog(logText, isNetwork = false) {
+        if (!logText)
+          return '<div class="log-line log-warning">Tidak ada log</div>';
+
+        const lines = logText.split('\n').filter((line) => line.trim());
+
+        return lines
+          .map((line) => {
+            let className = 'log-info';
+
+            // Color coding based on content
+            if (line.includes('[ERROR]') || line.includes('❌')) {
+              className = 'log-error';
+            } else if (line.includes('[WARN]') || line.includes('⚠️')) {
+              className = 'log-warning';
+            } else if (line.includes('[SUCCESS]') || line.includes('✅')) {
+              className = 'log-success';
+            } else if (line.includes('[NETWORK]') || line.includes('🌐')) {
+              className = 'log-network';
+            } else if (line.includes('[DEBUG]') || line.includes('🔍')) {
+              className = 'log-debug';
+            } else if (line.includes('[SECURITY]') || line.includes('🔐')) {
+              className = 'log-security';
+            } else if (line.includes('[QUEUE]') || line.includes('📊')) {
+              className = 'log-queue';
+            }
+
+            // Extract timestamp and message
+            const timeMatch = line.match(/\[(.*?)\]/);
+            if (timeMatch && timeMatch.index === 0) {
+              const time = timeMatch[1];
+              const message = line.substring(timeMatch[0].length).trim();
+              return `<div class="log-line"><span class="log-time">[${time}]</span> <span class="${className}">${message}</span></div>`;
+            }
+
+            return `<div class="log-line ${className}">${line}</div>`;
+          })
+          .join('');
       }
 
       // Fetch metrics
@@ -901,88 +960,50 @@
         }
       }
 
-      // Load log history
-      async function loadLogHistory() {
+      // Download specific log
+      async function downloadLog(type, filename) {
         try {
-          const res = await fetch('/logs/list', {
+          const endpoint =
+            type === 'network' ? '/logs/network' : '/logs/activity';
+          const res = await fetch(endpoint + '?lines=5000', {
             headers: { Authorization: 'Bearer ' + API_KEY },
           });
           const data = await res.json();
-          const dropdown = document.getElementById('logDropdown');
 
-          if (data.status && data.logs.length > 0) {
-            dropdown.innerHTML = data.logs
-              .map(
-                (log) =>
-                  `<div class="dropdown-item" onclick="downloadLog('${
-                    log.date
-                  }')">
-                            <span>📄 ${log.date}</span>
-                            <span style="font-size: 11px; color: #999;">${
-                              log.sizeFormatted ||
-                              (log.size / 1024).toFixed(2) + ' KB'
-                            }</span>
-                        </div>`
-              )
-              .join('');
-          } else {
-            dropdown.innerHTML =
-              '<div class="dropdown-item">Tidak ada riwayat log</div>';
-          }
-        } catch (err) {
-          console.error('Gagal load log history:', err);
-        }
-      }
-
-      // Download log
-      function downloadLog(date) {
-        fetch(`/logs/download/${date}`, {
-          headers: { Authorization: 'Bearer ' + API_KEY },
-        })
-          .then((response) => {
-            if (!response.ok) throw new Error('Gagal download log');
-            return response.blob();
-          })
-          .then((blob) => {
+          if (data.status && data.log) {
+            const blob = new Blob([data.log], { type: 'text/plain' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
+            const today = new Date().toISOString().split('T')[0];
             a.href = url;
-            a.download = `gateway-${date}.log`;
+            a.download = `${filename}-${today}.log`;
             document.body.appendChild(a);
             a.click();
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
-            showToast(`Log ${date} berhasil didownload`, 'success');
-          })
-          .catch((err) => {
-            showToast('Gagal download log: ' + err.message, 'error');
-          });
-
-        document.getElementById('logDropdown').classList.remove('show');
-      }
-
-      // Download current log
-      function downloadCurrentLog() {
-        const logContent = document.getElementById('log').innerText;
-        const blob = new Blob([logContent], { type: 'text/plain' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        const today = new Date().toISOString().split('T')[0];
-        a.href = url;
-        a.download = `gateway-log-${today}.txt`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-        showToast('Log berhasil didownload', 'success');
+            showToast(
+              `${filename} berhasil didownload (${
+                data.log.split('\n').length
+              } lines)`,
+              'success'
+            );
+          } else {
+            showToast('Tidak ada data log untuk didownload', 'warning');
+          }
+        } catch (err) {
+          showToast('Gagal mendownload log: ' + err.message, 'error');
+        }
       }
 
       // Clear log display
-      function clearLogDisplay() {
-        if (confirm('Clear tampilan log? (Log tetap tersimpan di server)')) {
-          document.getElementById('log').innerHTML =
-            '<div class="log-line log-info">ℹ️ Tampilan log dibersihkan. Refresh untuk memuat ulang.</div>';
-          showToast('Tampilan log dibersihkan', 'info');
+      function clearLogDisplay(logId, logName) {
+        if (
+          confirm(`Clear tampilan ${logName}? (Log tetap tersimpan di server)`)
+        ) {
+          document.getElementById(
+            logId
+          ).innerHTML = `<div class="log-line log-info">ℹ️ Tampilan ${logName} dibersihkan. Refresh untuk memuat ulang.</div>`;
+          showToast(`Tampilan ${logName} dibersihkan`, 'info');
         }
       }
 
@@ -1032,7 +1053,8 @@
       function refreshAll() {
         showToast('Memuat ulang data...', 'info');
         fetchQR();
-        fetchLog();
+        fetchActivityLog();
+        fetchNetworkLog();
         fetchMetrics();
         fetchHealth();
       }
@@ -1051,26 +1073,30 @@
         fetchMetrics();
         showToast('Metrics updated', 'success');
       });
-      document
-        .getElementById('clearLogBtn')
-        .addEventListener('click', clearLogDisplay);
-      document
-        .getElementById('downloadCurrentBtn')
-        .addEventListener('click', downloadCurrentLog);
 
-      document.getElementById('logMenuBtn').addEventListener('click', (e) => {
-        e.stopPropagation();
-        const dropdown = document.getElementById('logDropdown');
-        dropdown.classList.toggle('show');
-        if (dropdown.classList.contains('show')) {
-          loadLogHistory();
-        }
-      });
+      // Activity log controls
+      document
+        .getElementById('clearActivityBtn')
+        .addEventListener('click', () => {
+          clearLogDisplay('activityLog', 'Log Aktivitas');
+        });
+      document
+        .getElementById('downloadActivityBtn')
+        .addEventListener('click', () => {
+          downloadLog('activity', 'activity-log');
+        });
 
-      // Close dropdown when clicking outside
-      window.addEventListener('click', () => {
-        document.getElementById('logDropdown').classList.remove('show');
-      });
+      // Network log controls
+      document
+        .getElementById('clearNetworkBtn')
+        .addEventListener('click', () => {
+          clearLogDisplay('networkLog', 'Log Network');
+        });
+      document
+        .getElementById('downloadNetworkBtn')
+        .addEventListener('click', () => {
+          downloadLog('network', 'network-log');
+        });
 
       // Keyboard shortcuts
       document.addEventListener('keydown', (e) => {
@@ -1078,16 +1104,6 @@
         if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
           e.preventDefault();
           refreshAll();
-        }
-        // Ctrl/Cmd + L - Clear log display
-        if ((e.ctrlKey || e.metaKey) && e.key === 'l') {
-          e.preventDefault();
-          clearLogDisplay();
-        }
-        // Ctrl/Cmd + D - Download current log
-        if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
-          e.preventDefault();
-          downloadCurrentLog();
         }
       });
 
@@ -1100,8 +1116,10 @@
           document.getElementById('status').innerHTML = '❌ Konfigurasi Error';
           document.getElementById('status').className =
             'status-badge status-disconnected';
-          document.getElementById('log').innerHTML =
+          document.getElementById('activityLog').innerHTML =
             '<div class="log-line log-error">❌ API Key tidak valid. Silakan logout dan login kembali.</div>';
+          document.getElementById('networkLog').innerHTML =
+            '<div class="log-line log-error">❌ API Key tidak valid.</div>';
 
           // Disable all buttons
           document.getElementById('restart-btn').disabled = true;
@@ -1114,14 +1132,16 @@
         // Load initial data
         console.log('📊 Loading initial data...');
         fetchQR();
-        fetchLog();
+        fetchActivityLog();
+        fetchNetworkLog();
         fetchMetrics();
         fetchHealth();
 
-        // Auto refresh QR and Log every 10 seconds
+        // Auto refresh QR and Logs every 10 seconds
         autoRefreshInterval = setInterval(() => {
           fetchQR();
-          fetchLog();
+          fetchActivityLog();
+          fetchNetworkLog();
         }, 10000);
 
         // Update metrics every 5 seconds
@@ -1149,12 +1169,14 @@
           console.log('▶️ Tab visible - Resuming auto refresh');
           // Resume auto refresh
           fetchQR();
-          fetchLog();
+          fetchActivityLog();
+          fetchNetworkLog();
           fetchMetrics();
 
           autoRefreshInterval = setInterval(() => {
             fetchQR();
-            fetchLog();
+            fetchActivityLog();
+            fetchNetworkLog();
           }, 10000);
 
           metricsInterval = setInterval(() => {
@@ -1180,60 +1202,6 @@
       window.addEventListener('beforeunload', () => {
         if (connectionCheckInterval) clearInterval(connectionCheckInterval);
       });
-
-      // Easter egg - Konami code
-      let konamiCode = [];
-      const konamiPattern = [
-        'ArrowUp',
-        'ArrowUp',
-        'ArrowDown',
-        'ArrowDown',
-        'ArrowLeft',
-        'ArrowRight',
-        'ArrowLeft',
-        'ArrowRight',
-        'b',
-        'a',
-      ];
-
-      document.addEventListener('keydown', (e) => {
-        konamiCode.push(e.key);
-        konamiCode = konamiCode.slice(-10);
-
-        if (konamiCode.join(',') === konamiPattern.join(',')) {
-          showToast(
-            '🎮 Konami Code Activated! Made with ❤️ by Developer',
-            'success'
-          );
-          document.body.style.animation = 'rainbow 5s linear infinite';
-        }
-      });
-
-      // Service Worker registration for PWA (optional)
-      if (
-        'serviceWorker' in navigator &&
-        window.location.protocol === 'https:'
-      ) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker
-            .register('/sw.js')
-            .then((reg) => console.log('✅ Service Worker registered'))
-            .catch((err) =>
-              console.log('❌ Service Worker registration failed:', err)
-            );
-        });
-      }
     </script>
-
-    <style>
-      @keyframes rainbow {
-        0% {
-          filter: hue-rotate(0deg);
-        }
-        100% {
-          filter: hue-rotate(360deg);
-        }
-      }
-    </style>
   </body>
 </html>

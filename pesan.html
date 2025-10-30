@@ -620,6 +620,7 @@
 
     <script>
       let API_KEY = '{{LARAVEL_API_KEY}}';
+      console.log('Using API Key:', API_KEY);
       let messageHistory = JSON.parse(
         localStorage.getItem('messageHistory') || '[]'
       );
