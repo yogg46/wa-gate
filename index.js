@@ -1130,6 +1130,9 @@ app.post('/send-message', requireAuth, messageLimiter, async (req, res) => {
     });
 
     logger.info(`Pesan ditambahkan ke queue untuk ${sanitizedTo}`);
+
+     // Update metrics setelah menambahkan pesan ke queue
+    await updateMetrics();
     
     res.json({ 
       status: true, 
@@ -1390,6 +1393,11 @@ setInterval(() => {
   // Warning if memory usage is high
   if (memUsage.heapUsed > 500 * 1024 * 1024) { // 500MB
     logger.warn('Memory usage tinggi', { heap: `${heapUsedMB} MB` });
+  }
+
+    // Update metrics setiap 5 menit jika terhubung
+  if (connectionMetrics.connected && sock && sock.user) {
+     updateMetrics();
   }
   
 }, 5 * 60 * 1000); // Every 5 minutes
