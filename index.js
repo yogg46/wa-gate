@@ -40,6 +40,17 @@ const CONFIG = {
   MAX_LOG_SIZE_MB: parseInt(process.env.MAX_LOG_SIZE_MB) || 10
 };
 
+const EventEmitter = require('events');
+const loginEmitter = new EventEmitter();
+
+// Track status dengan lebih detail
+let sessionState = {
+  dashboardLoggedIn: false,
+  whatsappConnected: false,
+  greetingSent: false,
+  lastLoginTime: null
+};
+
 // Validasi environment variables yang wajib
 function validateEnv() {
   const required = ['LOGIN_USERNAME', 'LOGIN_PASSWORD', 'LARAVEL_API_KEY', 'LARAVEL_WEBHOOK_URL'];
@@ -77,7 +88,7 @@ async function loadMetricsFromFile() {
     if (fsSync.existsSync(METRICS_FILE)) {
       const data = await fs.readFile(METRICS_FILE, 'utf-8');
       const metrics = JSON.parse(data);
-      logger.info('Metrics dimuat dari file', { file: METRICS_FILE });
+      logger.debug('Metrics dimuat dari file', { file: METRICS_FILE });
       return metrics;
     }
   } catch (err) {
@@ -91,7 +102,7 @@ async function deleteMetricsFile() {
   try {
     if (fsSync.existsSync(METRICS_FILE)) {
       await fs.unlink(METRICS_FILE);
-      logger.info('File metrics.json dihapus', { file: METRICS_FILE });
+      logger.debug('File metrics.json dihapus', { file: METRICS_FILE });
     }
   } catch (err) {
     logger.error('Gagal menghapus metrics.json', { error: err.message });
@@ -568,17 +579,36 @@ async function startSock() {
         // Update dan simpan metrics saat terhubung
         await updateMetrics();
 
-         try {
-        if (sock.user?.id) {
-          await sock.sendMessage(sock.user.id, { 
-            text: '🤖 WhatsApp Gateway telah terhubung dan siap digunakan!' 
+        // ✅ KIRIM PESAN SAMBUTAN HANYA JIKA:
+        // 1. User sudah login ke dashboard
+        // 2. Pesan belum pernah dikirim dalam sesi ini
+        // 3. Koneksi baru saja terbentuk (bukan reconnect lama)
+        const shouldSendGreeting = 
+          sessionState.dashboardLoggedIn && 
+          !sessionState.greetingSent &&
+          sock.user?.id;
+
+        if (shouldSendGreeting) {
+          try {
+            await sock.sendMessage(sock.user.id, { 
+              text: `🤖 *WhatsApp Gateway Aktif*\n\n✅ Koneksi berhasil pada ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}\n📱 Siap menerima dan mengirim pesan!` 
+            });
+            
+            sessionState.greetingSent = true;
+            logger.success('Pesan sambutan terkirim ke user', { 
+              jid: sock.user.id,
+              dashboardLogin: sessionState.dashboardLoggedIn 
+            });
+          } catch (error) {
+            logger.error('Gagal mengirim pesan sambutan', { error: error.message });
+          }
+        } else {
+          logger.info('Pesan sambutan tidak dikirim', { 
+            dashboardLoggedIn: sessionState.dashboardLoggedIn,
+            greetingSent: sessionState.greetingSent,
+            hasUserId: !!sock.user?.id
           });
-            logger.info('Pesan sambutan terkirim ke user sendiri', { jid: sock.user.id });
         }
-      } catch (error) {
-        logger.error('Gagal mengirim pesan sambutan', { error: error.message });
-        // Ignore errors in welcome message
-      }
         
         setTimeout(async () => {
           qrBase64 = null;
@@ -597,6 +627,8 @@ async function startSock() {
       if (connection === 'close') {
         connectionMetrics.connected = false;
         connectionMetrics.reconnectAttempts++;
+        sessionState.whatsappConnected = false;
+        sessionState.greetingSent = false; // Reset agar bisa kirim lagi saat reconnect
         
         const code = lastDisconnect?.error?.output?.statusCode;
         const reason = lastDisconnect?.error?.message || 'Unknown';
@@ -737,6 +769,7 @@ function scheduleLogCleanup() {
   
   logger.debug(`Cleanup log dijadwalkan dalam ${Math.round(msToMidnight / 1000 / 60)} menit`);
 }
+ 
 
 // ========== ROUTES ==========
 app.get('/login', (req, res) => {
@@ -744,6 +777,7 @@ app.get('/login', (req, res) => {
     logger.debug('User sudah login, redirect ke dashboard', { 
       username: req.session.username 
     });
+   
     return res.redirect('/dashboard');
   }
   
@@ -773,9 +807,32 @@ app.post('/login', loginLimiter, (req, res) => {
     // Set session data sebelum regenerate
     req.session.loggedIn = true;
     req.session.username = username;
+
+    // ✅ SET STATUS LOGIN DAN TIMESTAMP
+    sessionState.dashboardLoggedIn = true;
+    sessionState.lastLoginTime = new Date();
+    sessionState.greetingSent = false; // Reset untuk login baru
     
     logger.success('Login berhasil', { username, ip: req.ip });
     
+     // ✅ JIKA WHATSAPP SUDAH CONNECT, KIRIM PESAN SEKARANG
+    if (sessionState.whatsappConnected && sock?.user?.id) {
+      try {
+        sock.sendMessage(sock.user.id, { 
+          text: `🤖 *Dashboard Login Terdeteksi*\n\n👤 User: ${username}\n🕐 ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}\n✅ Gateway siap digunakan!` 
+        });
+        
+        sessionState.greetingSent = true;
+        logger.success('Pesan sambutan terkirim saat login', { 
+          username,
+          jid: sock.user.id 
+        });
+      } catch (error) {
+        logger.error('Gagal mengirim pesan sambutan saat login', { error: error.message });
+      }
+    }
+
+
     // Save session dan redirect
     req.session.save((err) => {
       if (err) {
@@ -792,8 +849,14 @@ app.post('/login', loginLimiter, (req, res) => {
 
 app.post('/logout', requireLogin, (req, res) => {
   const username = req.session.username;
+   // ✅ RESET SESSION STATE
+  sessionState.dashboardLoggedIn = false;
+  sessionState.greetingSent = false;
+  sessionState.lastLoginTime = null;
+
   req.session.destroy(() => {
     logger.info('User logout', { username });
+    
     res.redirect('/login');
   });
 });
@@ -1145,17 +1208,30 @@ app.get('/health', apiLimiter, (req, res) => {
   });
 });
 
-app.get('/metrics', requireAuth, (req, res) => {
-  res.json({
-    timestamp: new Date().toISOString(),
-    connection: connectionMetrics,
-    messageQueue: messageQueue.getMetrics(),
-    process: {
-      uptime: process.uptime(),
-      memory: process.memoryUsage(),
-      cpu: process.cpuUsage()
+// 🔹 ENDPOINT METRICS - AMBIL DARI FILE JSON
+app.get('/metrics', requireAuth, async (req, res) => {
+  try {
+    // Coba load dari file terlebih dahulu
+    const metricsFromFile = await loadMetricsFromFile();
+    
+    if (metricsFromFile) {
+      logger.debug('Metrics dikirim dari file JSON');
+      return res.json(metricsFromFile);
     }
-  });
+    
+    // Jika file tidak ada, generate metrics baru dan simpan
+    logger.debug('File metrics tidak ditemukan, generate baru');
+    const metrics = await updateMetrics();
+    res.json(metrics);
+    
+  } catch (err) {
+    logger.error('Gagal mendapatkan metrics', { error: err.message });
+    res.status(500).json({ 
+      status: false, 
+      message: '❌ Gagal mendapatkan metrics',
+      error: err.message 
+    });
+  }
 });
 
 app.get('/', (req, res) => {
@@ -1209,6 +1285,8 @@ process.on('uncaughtException', (err) => {
 process.on('SIGTERM', async () => {
   logger.warn('SIGTERM signal received - Shutting down gracefully');
   
+   await deleteMetricsFile();
+
   // Close WhatsApp connection
   if (sock) {
     try {
