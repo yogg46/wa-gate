@@ -1,11 +1,11 @@
 {
-  "timestamp": "2025-10-31T01:02:39.032Z",
+  "timestamp": "2025-10-31T01:11:26.377Z",
   "connection": {
     "whatsapp": "connected",
     "connected": true,
     "lastConnected": "2025-10-31T01:02:39.031Z",
     "reconnectAttempts": 0,
-    "totalMessages": 1,
+    "totalMessages": 3,
     "errors": 0,
     "user": {
       "id": "6285607612754:1@s.whatsapp.net",
@@ -21,14 +21,14 @@
   },
   "process": {
     "uptime": {
-      "seconds": 1,
-      "formatted": "0h 0m 1s"
+      "seconds": 529,
+      "formatted": "0h 8m 49s"
     },
     "memory": {
-      "rss": "93.88 MB",
-      "heapUsed": "31.27 MB",
-      "heapTotal": "63.99 MB",
-      "external": "3.81 MB"
+      "rss": "90.31 MB",
+      "heapUsed": "33.86 MB",
+      "heapTotal": "35.99 MB",
+      "external": "4.26 MB"
     }
   },
   "system": {
@@ -37,6 +37,6 @@
     "nodeVersion": "v22.19.0",
     "cpuCount": 4,
     "totalMemory": "7.78 GB",
-    "freeMemory": "1.16 GB"
+    "freeMemory": "1.05 GB"
   }
 }
