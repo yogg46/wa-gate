@@ -509,7 +509,8 @@ async function updateMetrics() {
       user: sock?.user ? {
         id: sock.user.id,
         name: sock.user.name
-      } : null
+      } : null,
+      totalMessages: connectionMetrics.totalMessages + messageQueue.metrics.sent
     },
     messageQueue: messageQueue.getMetrics(),
     process: {

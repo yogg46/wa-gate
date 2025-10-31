@@ -910,6 +910,12 @@
           });
           const data = await res.json();
 
+          if (data.connection.totalMessages === undefined) {
+            data.connection.totalMessages =
+              data.messageQueue.sent + data.messageQueue.failed;
+              console.log('Calculated totalMessages:', data.connection.totalMessages);
+          }
+
           // Update stats
           document.getElementById('totalMessages').textContent =
             data.connection.totalMessages || 0;
@@ -919,7 +925,6 @@
             data.messageQueue.failed || 0;
           document.getElementById('queueLength').textContent =
             data.messageQueue.queueLength || 0;
-
 
           // Update connection details
           if (data.connection.lastConnected) {
