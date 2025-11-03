@@ -409,7 +409,16 @@ app.use(session({
     httpOnly: true,
     secure: false,  // Set to true only if using HTTPS
     sameSite: 'lax'  // Changed from 'strict' to 'lax' for better redirect handling
+  },
+  // ✅ Tambahkan filter untuk skip session creation pada bot
+  genid: function(req) {
+    const userAgent = req.get('user-agent') || '';
+    if (isBot(userAgent)) {
+      return null; // Jangan buat session ID untuk bot
+    }
+    return crypto.randomBytes(16).toString('hex');
   }
+
 }));
 
 // Request logging middleware
@@ -424,6 +433,38 @@ app.use((req, res, next) => {
       });
     }
   });
+   const userAgent = req.get('user-agent') || '';
+   if (req.path !== '/robots.txt' && isBot(userAgent)) {
+    // Track bot
+    const botName = BOT_USER_AGENTS.find(bot => 
+      userAgent.toLowerCase().includes(bot.toLowerCase())
+    ) || 'Unknown Bot';
+    
+    if (!botActivity.has(botName)) {
+      botActivity.set(botName, {
+        count: 0,
+        paths: [],
+        ips: new Set(),
+        firstSeen: Date.now(),
+        lastSeen: Date.now()
+      });
+    }
+    
+    const activity = botActivity.get(botName);
+    activity.count++;
+    activity.lastSeen = Date.now();
+    activity.ips.add(req.ip);
+    activity.paths.push({ path: req.path, time: Date.now() });
+    
+    logger.security('🤖 BOT BLOCKED', {
+      bot: botName,
+      ip: req.ip,
+      path: req.path,
+      totalAttempts: activity.count
+    });
+    
+    return res.status(403).send('Bot Access Denied');
+  }
   next();
 });
 
@@ -1290,6 +1331,95 @@ app.get('/', (req, res) => {
   res.redirect('/dashboard');
 });
 
+// Track bot activity
+const botActivity = new Map();
+
+ 
+
+// Endpoint untuk lihat bot activity
+app.get('/security/bots', requireAuth, (req, res) => {
+  const report = [];
+  
+  botActivity.forEach((activity, botName) => {
+    report.push({
+      bot: botName,
+      attempts: activity.count,
+      uniqueIPs: activity.ips.size,
+      ips: Array.from(activity.ips),
+      recentPaths: activity.paths.slice(-10).map(p => p.path),
+      firstSeen: new Date(activity.firstSeen).toISOString(),
+      lastSeen: new Date(activity.lastSeen).toISOString()
+    });
+  });
+  
+  res.json({
+    status: true,
+    totalBots: report.length,
+    report: report
+  });
+});
+
+// ========== BOT BLOCKER MIDDLEWARE ==========
+const BOT_USER_AGENTS = [
+  'GPTBot',
+  'OAI-SearchBot',
+  'ChatGPT-User',
+  'CCBot',
+  'anthropic-ai',
+  'Claude-Web',
+  'Google-Extended', // Bard/Gemini
+  'PerplexityBot',
+  'Bytespider', // TikTok
+  'Amazonbot',
+  'facebookexternalhit',
+  'Twitterbot',
+  'LinkedInBot'
+];
+
+function isBot(userAgent) {
+  if (!userAgent) return false;
+  return BOT_USER_AGENTS.some(bot => 
+    userAgent.toLowerCase().includes(bot.toLowerCase())
+  );
+}
+
+ 
+
+
+// ========== ROBOTS.TXT HANDLER ==========
+app.get('/robots.txt', (req, res) => {
+  const robotsTxt = `# WhatsApp Gateway - No Crawling Allowed
+User-agent: *
+Disallow: /
+
+User-agent: GPTBot
+Disallow: /
+
+User-agent: OAI-SearchBot
+Disallow: /
+
+User-agent: ChatGPT-User
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: anthropic-ai
+Disallow: /
+
+User-agent: Claude-Web
+Disallow: /
+`;
+  
+  res.type('text/plain');
+  res.send(robotsTxt);
+  
+  logger.info('robots.txt served', { 
+    ip: req.ip,
+    userAgent: req.get('user-agent') 
+  });
+});
+
 // 404 Handler
 app.use((req, res) => {
   const ip = req.ip || req.connection.remoteAddress;
@@ -1306,7 +1436,7 @@ app.use((req, res) => {
     query: req.query,
     timestamp: new Date().toISOString()
   });
-  
+
   res.status(404).json({ 
     status: false, 
     message: 'Anjaaaaay mau ngapain? Endpoint gak ada nih!' 

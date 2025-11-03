@@ -1,0 +1,45 @@
+# robots.txt - WhatsApp Gateway Security Policy
+
+# Block semua bot dari area sensitif
+User-agent: *
+Disallow: /dashboard
+Disallow: /login
+Disallow: /logout
+Disallow: /broadcast
+Disallow: /qr
+Disallow: /logs
+Disallow: /logs/*
+Disallow: /security/*
+Disallow: /metrics
+Disallow: /health
+Disallow: /api/*
+Disallow: /send-message
+Disallow: /restart
+
+# Block OpenAI bots specifically
+User-agent: GPTBot
+Disallow: /
+
+User-agent: OAI-SearchBot
+Disallow: /
+
+# Block bot lainnya
+User-agent: ChatGPT-User
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: anthropic-ai
+Disallow: /
+
+User-agent: Claude-Web
+Disallow: /
+
+# Allow only for public info (jika ada)
+# User-agent: *
+# Allow: /about
+# Allow: /docs
+
+# Crawl delay untuk bot yang diizinkan
+Crawl-delay: 10
