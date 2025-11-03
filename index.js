@@ -1293,9 +1293,13 @@ app.get('/', (req, res) => {
 // 404 Handler
 app.use((req, res) => {
   logger.warn('404 Not Found', { path: req.path, ip: req.ip });
+  logger.warn(`${req.method} ${req.path} ${res.statusCode} ${duration}ms`, {
+      ip: req.ip,
+      userAgent: req.get('user-agent')
+    });
   res.status(404).json({ 
     status: false, 
-    message: '❌ Endpoint tidak ditemukan' 
+    message: 'Anjaaaaay mau ngapain? Endpoint gak ada nih!' 
   });
 });
 
