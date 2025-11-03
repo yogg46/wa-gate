@@ -1292,11 +1292,21 @@ app.get('/', (req, res) => {
 
 // 404 Handler
 app.use((req, res) => {
-  logger.warn('404 Not Found', { path: req.path, ip: req.ip });
-  logger.warn(`${req.method} ${req.path} ${res.statusCode} ${duration}ms`, {
-      ip: req.ip,
-      userAgent: req.get('user-agent')
-    });
+  const ip = req.ip || req.connection.remoteAddress;
+  const path = req.path;
+  const userAgent = req.get('user-agent') || 'Unknown';
+  
+  // Log detail 404
+  logger.warn('404 Not Found', { 
+    ip: ip,
+    path: path,
+    method: req.method,
+    userAgent: userAgent,
+    referer: req.get('referer') || 'None',
+    query: req.query,
+    timestamp: new Date().toISOString()
+  });
+  
   res.status(404).json({ 
     status: false, 
     message: 'Anjaaaaay mau ngapain? Endpoint gak ada nih!' 
