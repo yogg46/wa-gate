@@ -753,7 +753,55 @@ async function cleanupOldLogs() {
   }
 }
 
+// ========== LOG CLEANUP - FIXED VERSION ==========
+let logCleanupTimer = null; // Track timer global
+
+async function cleanupOldLogs() {
+  try {
+    const logsDir = path.join(__dirname, 'logs');
+    const files = await fs.readdir(logsDir);
+    
+    const logFiles = await Promise.all(
+      files
+        .filter(file => /^(activity|network)-\d{4}-\d{2}-\d{2}\.log$/.test(file))
+        .map(async file => {
+          const fullPath = path.join(logsDir, file);
+          const stats = await fs.stat(fullPath);
+          return {
+            name: file,
+            path: fullPath,
+            time: stats.mtime.getTime()
+          };
+        })
+    );
+
+    const now = Date.now();
+    const retentionMs = CONFIG.LOG_RETENTION_DAYS * 24 * 60 * 60 * 1000;
+    let deletedCount = 0;
+
+    for (const file of logFiles) {
+      if (now - file.time > retentionMs) {
+        await fs.unlink(file.path);
+        deletedCount++;
+        logger.info(`Log lama dihapus: ${file.name}`);
+      }
+    }
+    
+    if (deletedCount > 0) {
+      logger.success(`Cleanup selesai: ${deletedCount} log dihapus`);
+    }
+  } catch (err) {
+    logger.error('Gagal cleanup log', { error: err.message });
+  }
+}
+
 function scheduleLogCleanup() {
+  // ✅ CLEAR TIMER LAMA SEBELUM BUAT BARU
+  if (logCleanupTimer) {
+    clearTimeout(logCleanupTimer);
+    logger.debug('Timer cleanup log lama dibersihkan');
+  }
+
   const now = new Date();
   const night = new Date(
     now.getFullYear(),
@@ -763,12 +811,12 @@ function scheduleLogCleanup() {
   );
   const msToMidnight = night.getTime() - now.getTime();
 
-  setTimeout(() => {
+  logCleanupTimer = setTimeout(() => {
     cleanupOldLogs();
-    scheduleLogCleanup();
+    scheduleLogCleanup(); // Reschedule untuk hari berikutnya
   }, msToMidnight);
   
-  logger.debug(`Cleanup log dijadwalkan dalam ${Math.round(msToMidnight / 1000 / 60)} menit`);
+  logger.info(`Cleanup log dijadwalkan dalam ${Math.round(msToMidnight / 1000 / 60)} menit`); // ✅ Ubah ke INFO agar terlihat
 }
  
 
@@ -1266,30 +1314,22 @@ app.use((err, req, res, next) => {
   });
 });
 
-// ========== PROCESS HANDLERS ==========
-process.on('unhandledRejection', (reason, promise) => {
-  logger.error('Unhandled Promise Rejection', { 
-    reason: reason?.toString(),
-    stack: reason?.stack 
-  });
-});
-
-process.on('uncaughtException', (err) => {
-  logger.error('Uncaught Exception', { 
-    error: err.message,
-    stack: err.stack 
-  });
-  
-  // Graceful shutdown
-  setTimeout(() => {
-    process.exit(1);
-  }, 1000);
-});
-
+// ========== PROCESS HANDLERS - UPDATED ==========
 process.on('SIGTERM', async () => {
   logger.warn('SIGTERM signal received - Shutting down gracefully');
   
-   await deleteMetricsFile();
+  // ✅ CLEANUP TIMERS
+  if (logCleanupTimer) {
+    clearTimeout(logCleanupTimer);
+    logger.debug('Cleanup timer cleared');
+  }
+  
+  if (monitoringInterval) {
+    clearInterval(monitoringInterval);
+    logger.debug('Monitoring interval cleared');
+  }
+  
+  await deleteMetricsFile();
 
   // Close WhatsApp connection
   if (sock) {
@@ -1314,6 +1354,11 @@ process.on('SIGTERM', async () => {
 
 process.on('SIGINT', async () => {
   logger.warn('SIGINT signal received - Shutting down');
+  
+  // ✅ CLEANUP TIMERS
+  if (logCleanupTimer) clearTimeout(logCleanupTimer);
+  if (monitoringInterval) clearInterval(monitoringInterval);
+  
   process.exit(0);
 });
 
@@ -1330,14 +1375,54 @@ function getLocalIp() {
   return 'localhost';
 }
 
-// ========== STARTUP ==========
+// ========== MONITORING INTERVAL - FIXED ==========
+let monitoringInterval = null; // Track interval global
+
+function startMonitoring() {
+  // ✅ CLEAR INTERVAL LAMA
+  if (monitoringInterval) {
+    clearInterval(monitoringInterval);
+    logger.debug('Monitoring interval lama dibersihkan');
+  }
+
+  monitoringInterval = setInterval(async () => {
+    const memUsage = process.memoryUsage();
+    const heapUsedMB = (memUsage.heapUsed / 1024 / 1024).toFixed(2);
+    
+    // Log metrics every 5 minutes
+    logger.debug('System metrics', {
+      heap: `${heapUsedMB} MB`,
+      queueLength: messageQueue.queue.length,
+      connected: connectionMetrics.connected,
+      totalMessages: connectionMetrics.totalMessages
+    });
+    
+    // Warning if memory usage is high
+    if (memUsage.heapUsed > 500 * 1024 * 1024) { // 500MB
+      logger.warn('Memory usage tinggi', { heap: `${heapUsedMB} MB` });
+    }
+
+    // Update metrics setiap 5 menit jika terhubung
+    if (connectionMetrics.connected && sock && sock.user) {
+      await updateMetrics();
+    }
+  }, 5 * 60 * 1000); // Every 5 minutes
+  
+  logger.info('Monitoring interval started (5 menit)');
+}
+
+
+// ========== STARTUP - UPDATED ==========
 async function startServer() {
   try {
     // Cleanup old logs on startup
     await cleanupOldLogs();
     
-    // Schedule daily cleanup
+    // ✅ Schedule daily cleanup (HANYA SEKALI)
     scheduleLogCleanup();
+    
+    // ✅ Start monitoring (HANYA SEKALI)
+    startMonitoring();
     
     // Start WhatsApp socket
     await startSock();
@@ -1378,27 +1463,3 @@ async function startServer() {
 // Start the server
 startServer();
 
-// ========== MONITORING INTERVAL ==========
-setInterval(() => {
-  const memUsage = process.memoryUsage();
-  const heapUsedMB = (memUsage.heapUsed / 1024 / 1024).toFixed(2);
-  
-  // Log metrics every 5 minutes
-  logger.debug('System metrics', {
-    heap: `${heapUsedMB} MB`,
-    queueLength: messageQueue.queue.length,
-    connected: connectionMetrics.connected,
-    totalMessages: connectionMetrics.totalMessages
-  });
-  
-  // Warning if memory usage is high
-  if (memUsage.heapUsed > 500 * 1024 * 1024) { // 500MB
-    logger.warn('Memory usage tinggi', { heap: `${heapUsedMB} MB` });
-  }
-
-    // Update metrics setiap 5 menit jika terhubung
-  if (connectionMetrics.connected && sock && sock.user) {
-     updateMetrics();
-  }
-  
-}, 5 * 60 * 1000); // Every 5 minutes
